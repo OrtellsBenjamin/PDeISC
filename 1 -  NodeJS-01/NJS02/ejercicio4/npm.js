@@ -28,7 +28,7 @@ http.createServer(function (req, res) {
     // Se envia el resultado al navegador
     res.write('<pre>' + data + '</pre>');  // Muestra el arte ASCII en el navegador
 
-    // Usamos `chalk` para mostrar el arte en consola con un color personalizado en este caso verde
+    // Usamos `chalk` para mostrar el arte en consola con un color personalizado en este caso azul
     console.log(chalk.blue(data));
 
     res.end();
