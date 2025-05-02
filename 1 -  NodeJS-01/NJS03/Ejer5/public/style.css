@@ -1,0 +1,26 @@
+*{
+    font-family: "Roboto Mono", monospace;
+    font-weight: 700;
+    font-style: normal;
+  }
+  
+  body {
+    padding: 20px;
+    background-color: rgb(240, 240, 240);
+  }
+  
+  button {
+    color: white;
+    margin: 5px;
+    padding: 20px;
+    border-radius: 5px;
+    background-color: blueviolet;
+    border: none;
+  }
+  
+  img {
+    margin-top: 10px;
+    display: block;
+    width: 200px;
+    height: 200px;
+  }
