@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Ejercicio 6</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Ejercicio 6</h1>
+
+  <form id="formulario">
+    <label>Nombre: <input type="text" id="nombre" required></label><br><br>
+    <label>Apellido: <input type="text" id="apellido" required></label><br><br>
+    
+    <label>Sexo:</label>
+    <input type="radio" name="sexo" value="Masculino"> Masculino
+    <input type="radio" name="sexo" value="Femenino"> Femenino<br><br>
+
+    <label>País:</label>
+    <select id="pais" required>
+      <option value="Argentina">Argentina</option>
+      <option value="México">México</option>
+      <option value="Chile">Chile</option>
+    </select><br><br>
+
+    <label>Edad: <input type="number" id="edad" required></label><br><br>
+    <label>Email: <input type="email" id="email" required></label><br><br>
+
+    <label>Intereses:</label>
+    <input type="checkbox" id="deporte" value="Deporte"> Deporte
+    <input type="checkbox" id="musica" value="Música"> Música
+    <input type="checkbox" id="arte" value="Arte"> Arte<br><br>
+
+    <button type="submit">Enviar</button>
+  </form>
+
+  <h2>Datos Ingresados:</h2>
+  <div id="resultados"></div>
+
+  <script src="/script.js"></script>
+</body>
+</html>
