@@ -1,0 +1,130 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  color: white;
+}
+
+body {
+  background-color: #29394b;
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+.contenedor {
+  width: 400px;
+  background-color: #161f29;
+  padding: 20px;
+  margin: 100px auto 20px auto;
+  border-radius: 4px;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="date"],
+select {
+  width: 100%;
+  padding: 10px;
+  background-color: #24303c;
+  border: 1px solid #8d84ff;
+  border-radius: 4px;
+  color: white;
+}
+
+input:focus,
+select:focus {
+  border-color: #b8d4ff;
+  outline: none;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
+
+.radio-group,
+.checkbox-group {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  font-size: 14px;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  width: auto;
+  margin-right: 5px;
+}
+
+button {
+  width: 100%;
+  background-color: rgb(0, 96, 206);
+  padding: 10px;
+  color: white;
+  border-radius: 5px;
+  border: none;
+  font-size: 16px;
+}
+
+button:hover {
+  background-color: rgb(0, 76, 155);
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+h2 {
+  text-align: center;
+  font-size: 22px;
+  color: white;
+  margin-bottom: 20px;
+}
+
+#mensaje {
+  text-align: center;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+#listaPersonas {
+  width: 400px;
+  max-width: 95%;
+  background-color: #161f29;
+  padding: 20px;
+  margin: 20px auto;
+  border-radius: 4px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  list-style: none;
+}
+
+#lista p {
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .contenedor,
+  #resultados {
+    font-size: 16px;
+    padding: 15px;
+  }
+
+  label,
+  input,
+  select,
+  button {
+    font-size: 16px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulario de Personas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <form id="personaForm" class="contenedor">
+    <h1>Registro de Personas</h1>
+
+    <input type="text" name="nombre" placeholder="Nombre" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" title="Solo letras">
+    
+    <input type="text" name="apellido" placeholder="Apellido" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" title="Solo letras">
+    
+    <input type="number" name="edad" placeholder="Edad" required min="0" max="100" title="Edad entre 0 y 100">
+    
+    <input type="date" name="fechaNacimiento" required>
+
+    <select name="sexo" required>
+      <option value="">Sexo</option>
+      <option value="Masculino">Masculino</option>
+      <option value="Femenino">Femenino</option>
+    </select>
+
+    <input type="text" name="documento" placeholder="Documento" required pattern="[A-Za-z0-9]{5,15}" title="5-15 caracteres alfanuméricos">
+
+    <input type="text" name="estadoCivil" placeholder="Estado civil" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" title="Solo letras">
+
+    <input type="text" name="nacionalidad" placeholder="Nacionalidad" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" title="Solo letras">
+
+    <input type="number" name="telefono" placeholder="Teléfono" required pattern="[0-9]{7,15}" title="Solo números (7 a 15 dígitos)">
+
+    <input type="email" name="mail" placeholder="Correo electrónico" required>
+
+    <label>¿Tiene hijos?
+      <input type="checkbox" id="tieneHijos">
+    </label>
+
+    <input type="number" name="cantidadHijos" id="cantidadHijos" placeholder="¿Cuántos?" style="display:none;" min="1" max="20">
+
+    <button type="submit">Guardar</button>
+  </form>
+
+
+  <div id="mensaje"></div>
+
+  <h2>Personas registradas:</h2>
+  <ul id="listaPersonas"></ul>
+
+  <script src="script.js"></script>
+</body>
+</html>
