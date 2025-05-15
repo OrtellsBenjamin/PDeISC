@@ -11,7 +11,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-  // Cargo en formulario
+  //Envío el archivo HTML del formulario al cliente
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
