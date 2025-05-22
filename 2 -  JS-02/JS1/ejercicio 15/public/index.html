@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ejercicio 15</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="form-container">
+    <h1>Decodificar Mensaje Secreto</h1>
+    <form id="formulario">
+      <label for="mensaje">Ingrese el mensaje codificado:</label>
+      <textarea id="mensaje" name="mensaje" rows="5" required></textarea>
+
+      <button type="submit">Decodificar</button>
+    </form>
+
+    <section id="resultado" style="display:none; margin-top: 20px;">
+      <h2>Mensaje Decodificado:</h2>
+      <p id="mensajeDecodificado"></p>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
