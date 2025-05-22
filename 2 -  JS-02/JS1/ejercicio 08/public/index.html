@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ejercicio 8</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main>
+    <div class="form-container">
+
+      <section>
+        <h2>Verificar si existe "admin"</h2>
+        <p><strong>Roles:</strong> <span id="roles"></span></p>
+        <button id="btn-admin">¿Incluye "admin"?</button>
+        <p id="resultado-admin"></p>
+      </section>
+
+      <section>
+        <h2>¿Existe "verde" en colores?</h2>
+        <p><strong>Colores:</strong> <span id="colores"></span></p>
+        <button id="btn-verde">Buscar "verde"</button>
+        <p id="resultado-verde"></p>
+      </section>
+
+      <section>
+        <h2>Agregar número si no existe</h2>
+        <p><strong>Números:</strong> <span id="numeros"></span></p>
+        <form id="form-numero">
+          <label for="numero-nuevo">Número:</label>
+          <input type="number" id="numero-nuevo" required />
+          <button type="submit">Agregar</button>
+        </form>
+        <p id="resultado-numero"></p>
+      </section>
+
+    </div>
+  </main>
+  <script src="/script.js"></script>
+</body>
+</html>

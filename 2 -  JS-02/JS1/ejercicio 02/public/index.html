@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="/styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet" />
+  <title>Ejercicio 2</title>
+</head>
+<body>
+
+  <main>
+    <div class="form-container">
+      
+      <div>
+        <h2>1. Eliminar último animal</h2>
+        <button onclick="popAnimal()">Eliminar</button>
+        <p><strong>Animales:</strong> <span id="lista-animales"></span></p>
+        <p><strong>Eliminado:</strong> <span id="animal-eliminado"></span></p>
+      </div>
+
+      <div>
+        <h2>2. Quitar último producto de la lista de compras</h2>
+        <button onclick="popCompra()">Eliminar</button>
+        <p><strong>Compras:</strong> <span id="lista-compras"></span></p>
+        <p><strong>Eliminado:</strong> <span id="compra-eliminada"></span></p>
+      </div>
+
+      <div>
+        <h2>3. Vaciar lista de animales</h2>
+        <button onclick="vaciarAnimales()">Vaciar animales</button>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="/script.js"></script>
+</body>
+</html>
