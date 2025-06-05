@@ -1,0 +1,210 @@
+:root {
+    --cell-size: min(20vw, 20vh, 100px);
+    --font-size: calc(var(--cell-size) * 0.6);
+    --padding: max(1rem, 2vmin);
+    --min-height: 400px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Cambiado a flex-start para mejor manejo vertical */
+    min-height: 100vh;
+    margin: 0;
+    padding: var(--padding);
+    background-color: #88d5e2;
+    overflow-y: auto; /* Permite scrolling si es necesario */
+}
+
+.game-container {
+    text-align: center;
+    background: white;
+    padding: calc(var(--padding) * 1.5);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    min-height: var(--min-height);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+h1 {
+    color: #333;
+    margin: 0 0 1rem 0;
+    font-size: clamp(1.5rem, 5vmin, 2rem);
+}
+
+.game-mode {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.game-mode button {
+    padding: 0.5rem;
+    font-size: clamp(0.7rem, 3vmin, 0.9rem);
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    flex: 1 1 120px;
+    max-width: 120px;
+}
+
+.game-mode button:hover {
+    background-color: #1976d2;
+}
+
+.game-mode button.active {
+    background-color: #0d47a1;
+}
+
+.status {
+    margin-bottom: 1rem;
+    font-size: clamp(1rem, 4vmin, 1.1rem);
+    font-weight: bold;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 5px;
+    margin: 1rem 0;
+    aspect-ratio: 1/1;
+    width: 100%;
+    min-height: 0; /* Importante para contenedores flex */
+}
+
+.cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #d3d3d3;
+    font-size: var(--font-size);
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: all 0.3s;
+    min-height: 0; /* Importante para grid en contenedores flex */
+    aspect-ratio: 1/1;
+}
+
+.cell:hover {
+    background-color: #ddd;
+}
+
+.cell.x {
+    color: #ff5252;
+}
+
+.cell.o {
+    color: #2196f3;
+}
+
+.controls {
+    margin: 1rem 0;
+}
+
+#reset-btn {
+    padding: 0.7rem 1.2rem;
+    font-size: clamp(0.8rem, 3vmin, 0.9rem);
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%;
+    max-width: 200px;
+}
+
+#reset-btn:hover {
+    background-color: #388e3c;
+}
+
+.result {
+    font-size: clamp(1rem, 4vmin, 1.1rem);
+    font-weight: bold;
+    min-height: 1.5em;
+    margin-top: 0.5rem;
+}
+
+/* Ajustes para pantallas muy pequeñas verticalmente */
+@media (max-height: 500px) {
+    :root {
+        --cell-size: min(15vw, 15vh);
+        --padding: 0.5rem;
+        --min-height: auto;
+    }
+    
+    .game-container {
+        padding: 1rem;
+    }
+    
+    h1 {
+        margin-bottom: 0.5rem;
+        font-size: 1.3rem;
+    }
+    
+    .status, .result {
+        margin-bottom: 0.5rem;
+    }
+    
+    .board {
+        margin: 0.5rem 0;
+    }
+}
+
+/* Ajustes para orientación horizontal */
+@media (orientation: landscape) and (max-height: 500px) {
+    .game-container {
+        max-width: 90vw;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .game-header {
+        flex: 1 1 100%;
+    }
+    
+    .board {
+        width: 60vmin;
+        height: 60vmin;
+        max-width: 60vh;
+        max-height: 60vw;
+    }
+    
+    .game-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        flex: 1;
+        min-width: 150px;
+    }
+    
+    .game-mode {
+        flex-direction: column;
+    }
+    
+    .game-mode button {
+        max-width: none;
+    }
+}

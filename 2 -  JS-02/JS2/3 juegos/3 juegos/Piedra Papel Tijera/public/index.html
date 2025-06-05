@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Piedra, Papel o Tijera</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Piedra, Papel o Tijera</h1>
+  <button class="modo-btn" id="btn-cambiar-modo">Cambiar a modo 1 vs 1</button>
+
+  <div id="turno-info">Turno del Jugador 1</div>
+
+ 
+  <div class="elecciones" id="elecciones-jugador1">
+    <button data-j1="Piedra"><img src="/imagenes/piedra.png" alt="Piedra"></button>
+    <button data-j1="Papel"><img src="/imagenes/papel.png" alt="Papel"></button>
+    <button data-j1="Tijeras"><img src="/imagenes/tijera.png" alt="Tijeras"></button>
+  </div>
+
+  <div class="elecciones" id="elecciones-jugador2" style="display:none;">
+    <button data-j2="Piedra"><img src="/imagenes/piedra.png" alt="Piedra"></button>
+    <button data-j2="Papel"><img src="/imagenes/papel.png" alt="Papel"></button>
+    <button data-j2="Tijeras"><img src="/imagenes/tijera.png" alt="Tijeras"></button>
+  </div>
+
+  <div id="campo-batalla">
+    <div id="img-ataque-jugador"></div>
+    <div id="msj-batalla">Empieza el juego</div>
+    <div id="img-ataque-pc"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

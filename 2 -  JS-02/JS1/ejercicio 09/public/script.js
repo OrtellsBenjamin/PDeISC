@@ -5,16 +5,14 @@ window.onload = () => {
       document.getElementById('array-nombres').textContent = data.nombres.join(', ');
       document.getElementById('array-numeros').textContent = data.numeros.join(', ');
 
-      const personasTexto = data.personas
-        .map(p => `${p.nombre}: ${p.edad}`)
-        .join(', ');
+      const personasTexto = data.personas.map(p => `${p.nombre}: ${p.edad}`).join(', ');
       document.getElementById('array-personas').textContent = personasTexto;
 
       const saludos = data.nombres.map(nombre => `Hola, ${nombre}!`);
       document.getElementById('saludos').innerHTML = saludos.join('<br>');
 
       const duplicados = [];
-      data.numeros.forEach(num => duplicados.push(num * 2));
+      data.numeros.forEach(num => duplicados.push(num *2));
       document.getElementById('duplicados').innerHTML = duplicados.join(', ');
 
       const detalles = [];
