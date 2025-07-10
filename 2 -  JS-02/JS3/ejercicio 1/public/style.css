@@ -1,0 +1,144 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    background-color: #f8f9fa;
+    color: #343a40;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+main {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+    margin-top: 50px;
+}
+
+h1 {
+    color: #007bff;
+    margin-bottom: 25px;
+    font-size: 2em;
+}
+
+form {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+label {
+    font-weight: bold;
+    color: #6c757d;
+    font-size: 1.1em;
+}
+
+input[type="number"] {
+    padding: 10px 15px;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    font-size: 1em;
+    width: 100%;
+    max-width: 250px;
+    box-sizing: border-box;
+}
+
+input[type="number"]:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+button[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    max-width: 200px;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+p {
+    margin-top: 15px;
+    font-size: 1.1em;
+}
+
+p strong {
+    color: #343a40;
+}
+
+#lista-numeros {
+    font-weight: normal;
+    color: #007bff;
+    display: block;
+    margin-top: 5px;
+    word-wrap: break-word;
+}
+
+#mensaje-guardar {
+    font-weight: bold;
+    margin-top: 20px;
+    font-size: 1.1em;
+    min-height: 20px;
+}
+
+#mensaje-guardar[style*="color: green"] {
+    color: #28a745;
+}
+
+#mensaje-guardar[style*="color: red"] {
+    color: #dc3545;
+}
+
+@media (min-width: 768px) {
+    form {
+        flex-direction: row;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    label {
+        flex-basis: auto;
+    }
+
+    input[type="number"] {
+        width: auto;
+        flex-grow: 1;
+    }
+
+    button[type="submit"] {
+        width: auto;
+    }
+
+    main {
+        padding: 40px;
+    }
+
+    h1 {
+        font-size: 2.5em;
+    }
+}
+
+@media (min-width: 1024px) {
+    main {
+        max-width: 700px;
+    }
+}

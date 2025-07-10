@@ -7,10 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const botonHumano = document.getElementById('human-btn');
     const botonComputadora = document.getElementById('computer-btn');
     
-    let jugadorActual = 'X';
-    let estadoJuego = ['', '', '', '', '', '', '', '', ''];
-    let juegoActivo = true;
-    let vsComputadora = false;
+   var jugadorActual = 'X';
+   var estadoJuego = ['', '', '', '', '', '', '', '', ''];
+   var juegoActivo = true;
+   var vsComputadora = false;
     
     const condicionesGanadoras = [
         [0, 1, 2], [3, 4, 5], [6, 7, 8], // filas
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Luego bloquea al jugador humano
         // 3. Si no, elige aleatoriamente
         
-        let movimiento = encontrarMovimientoGanador('O') || // Intenta ganar
+       var movimiento = encontrarMovimientoGanador('O') || // Intenta ganar
                         encontrarMovimientoGanador('X') || // Bloquea humano
                         encontrarMovimientoAleatorio();
         
