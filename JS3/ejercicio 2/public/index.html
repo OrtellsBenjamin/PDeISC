@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Filtrar números desde archivo TXT</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main> 
+        <h1>Filtrar números que empiezan y terminan con el mismo dígito</h1>
+
+        <input type="file" id="inputArchivo" accept=".txt" />
+        <button id="procesarBtn" disabled>Procesar archivo</button>
+
+        <h2>Resultados:</h2>
+        <p><strong>Números útiles:</strong> <span id="numerosUtiles"></span></p>
+        <p><strong>Cantidad números útiles:</strong> <span id="countUtiles">0</span></p>
+        <p><strong>Cantidad números no útiles:</strong> <span id="countNoUtiles">0</span></p>
+        <p><strong>Porcentaje números útiles:</strong> <span id="porcentajeUtiles">0%</span></p>
+
+        <button id="descargarBtn" disabled>Descargar archivo filtrado</button>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

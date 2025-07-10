@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Ingreso de Números</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <main>
+        <h1>Ingresá entre 10 y 20 números</h1>
+
+        <form id="form-agregar-numero">
+            <label for="numero-input">Agregar número:</label>
+            <input type="number" id="numero-input" name="numero" required />
+            <button type="submit">Agregar</button>
+        </form>
+
+        <p><strong>Números cargados:</strong> <span id="lista-numeros"></span></p>
+
+        <form id="form-guardar-numeros" method="POST" action="/guardar-numeros">
+            <input type="hidden" name="numerosAEnviar" id="numeros-ocultos" />
+            <button type="submit">Finalizar y guardar</button>
+        </form>
+
+        <p id="mensaje-guardar"></p>
+    </main>
+    <script src="/script.js"></script>
+</body>
+</html>
