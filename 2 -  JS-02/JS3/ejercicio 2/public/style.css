@@ -1,0 +1,137 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 20px;
+    color: #343a40;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+main {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 600px;
+    width: 100%;
+    margin: 50px auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+h1 {
+    color: #007bff;
+    font-size: 2em;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+input[type="file"] {
+    display: block;
+    margin: 0 auto 20px auto;
+    width: calc(100% - 20px);
+    max-width: 350px;
+    padding: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1em;
+    background-color: #e9ecef;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="file"]:hover {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    margin-top: 15px;
+    border-radius: 6px;
+    width: auto;
+    min-width: 180px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+}
+
+button:hover:not(:disabled) {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+h2 {
+    color: #6c757d;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    font-size: 1.5em;
+    text-align: center;
+}
+
+p {
+    margin: 10px 0;
+    font-size: 1.1em;
+    color: #343a40;
+}
+
+span {
+    font-weight: bold;
+    color: #007bff;
+}
+
+@media (max-width: 767px) {
+    body {
+        padding: 15px;
+    }
+
+    main {
+        padding: 20px;
+        margin-top: 30px;
+    }
+
+    h1 {
+        font-size: 1.8em;
+    }
+
+    h2 {
+        font-size: 1.3em;
+    }
+
+    input[type="file"] {
+        width: 100%;
+        max-width: none;
+        padding: 10px;
+    }
+
+    button {
+        width: 100%;
+        min-width: unset;
+        font-size: 1em;
+        padding: 10px 15px;
+    }
+
+    p {
+        font-size: 1em;
+    }
+}
