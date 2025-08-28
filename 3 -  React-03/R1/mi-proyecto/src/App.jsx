@@ -16,7 +16,7 @@ export default function App() {
           nombre="Juan"
           apellido="Pérez"
           profesion="Desarrollador Web"
-          imagen="https://hireline.io/blog/wp-content/uploads/2022/07/habilidades-de-un-programador-1200x900.jpg"
+          imagen="https://hireline.io/blog/wp-content/uploads/2022/07/habilidades-de-un-programador-1200x900.jpg "
         />
       </div>
       <div className="mb-4">
