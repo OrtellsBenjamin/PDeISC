@@ -3,10 +3,7 @@ import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
-
   const [usuarios, setUsuarios] = useState([]);
-
-
   const [form, setForm] = useState({
     nombre: "",
     apellido: "",
@@ -16,11 +13,9 @@ function App() {
     fecha_nacimiento: "",
     email: ""
   });
-
-
   const [editId, setEditId] = useState(null);
   const [filtro, setFiltro] = useState("");
-
+  const [errores, setErrores] = useState({});
 
   const cargarUsuarios = () => {
     axios
@@ -33,15 +28,41 @@ function App() {
     cargarUsuarios();
   }, []);
 
-
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const validarFormulario = () => {
+    const errores = {};
+    if (!form.nombre.trim()) errores.nombre = "El nombre es obligatorio.";
+    if (!form.apellido.trim()) errores.apellido = "El apellido es obligatorio.";
+    if (!form.email.trim()) {
+      errores.email = "El email es obligatorio.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      errores.email = "El email no tiene un formato válido.";
+    }
+    if (form.telefono && !/^\d+$/.test(form.telefono)) {
+      errores.telefono = "El teléfono solo puede contener números.";
+    }
+    if (form.celular && !/^\d+$/.test(form.celular)) {
+      errores.celular = "El celular solo puede contener números.";
+    }
+    if (form.fecha_nacimiento) {
+      const hoy = new Date();
+      const fechaNac = new Date(form.fecha_nacimiento);
+      if (fechaNac > hoy) errores.fecha_nacimiento = "La fecha de nacimiento no puede ser futura.";
+    }
+    return errores;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
+    const erroresValidacion = validarFormulario();
+    if (Object.keys(erroresValidacion).length > 0) {
+      setErrores(erroresValidacion);
+      return;
+    }
+    setErrores({});
     if (editId) {
       axios
         .put(`http://localhost:3002/usuarios/${editId}`, form)
@@ -62,7 +83,6 @@ function App() {
     }
   };
 
-
   const handleDelete = (id) => {
     axios
       .delete(`http://localhost:3002/usuarios/${id}`)
@@ -70,7 +90,6 @@ function App() {
       .catch((err) => console.error("Error al eliminar:", err));
   };
 
- 
   const handleEdit = (usuario) => {
     setEditId(usuario.id);
     setForm({
@@ -94,8 +113,8 @@ function App() {
       fecha_nacimiento: "",
       email: ""
     });
+    setErrores({});
   };
-
 
   const usuariosFiltrados = usuarios.filter(
     (u) =>
@@ -107,7 +126,6 @@ function App() {
     <div className="container mt-4">
       <h1 className="mb-4">Usuarios</h1>
 
-      
       <form onSubmit={handleSubmit} className="mb-4">
         <div className="row">
           <div className="col">
@@ -117,9 +135,8 @@ function App() {
               onChange={handleChange}
               placeholder="Nombre"
               className="form-control"
-          
-              required
             />
+            {errores.nombre && <small className="text-danger">{errores.nombre}</small>}
           </div>
           <div className="col">
             <input
@@ -128,8 +145,8 @@ function App() {
               onChange={handleChange}
               placeholder="Apellido"
               className="form-control"
-              required
             />
+            {errores.apellido && <small className="text-danger">{errores.apellido}</small>}
           </div>
           <div className="col">
             <input
@@ -151,6 +168,7 @@ function App() {
               placeholder="Teléfono"
               className="form-control"
             />
+            {errores.telefono && <small className="text-danger">{errores.telefono}</small>}
           </div>
           <div className="col">
             <input
@@ -160,6 +178,7 @@ function App() {
               placeholder="Celular"
               className="form-control"
             />
+            {errores.celular && <small className="text-danger">{errores.celular}</small>}
           </div>
           <div className="col">
             <input
@@ -169,6 +188,7 @@ function App() {
               onChange={handleChange}
               className="form-control"
             />
+            {errores.fecha_nacimiento && <small className="text-danger">{errores.fecha_nacimiento}</small>}
           </div>
         </div>
 
@@ -181,8 +201,8 @@ function App() {
               onChange={handleChange}
               placeholder="Email"
               className="form-control"
-              required
             />
+            {errores.email && <small className="text-danger">{errores.email}</small>}
           </div>
           <div className="col">
             <button type="submit" className="btn btn-primary">
@@ -220,7 +240,7 @@ function App() {
               <td>{u.direccion}</td>
               <td>{u.telefono}</td>
               <td>{u.celular}</td>
-              <td>{new Date(u.fecha_nacimiento).toLocaleDateString()}</td>
+              <td>{u.fecha_nacimiento ? new Date(u.fecha_nacimiento).toLocaleDateString() : ""}</td>
               <td>{u.email}</td>
               <td>
                 <button
