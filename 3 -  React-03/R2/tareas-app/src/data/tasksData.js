@@ -2,7 +2,7 @@ const tasksData = [
   {
     id: 1,
     title: "Estudiar React",
-    description: "Repasar componentes y hooks",
+    description: "Repasar componentes",
     date: "27/08/2025",
     completed: false,
   },
