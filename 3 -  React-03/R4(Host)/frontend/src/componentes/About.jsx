@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabaseClient"; // tu conexión a Supabase
+import { supabase } from "../lib/supabaseClient"; 
 
 export default function About({ aboutRef, aboutText, setAboutText, editingSection, setEditingSection, isLogged }) {
   const [localText, setLocalText] = useState("");
@@ -89,15 +89,6 @@ export default function About({ aboutRef, aboutText, setAboutText, editingSectio
                   className="px-4 py-2 bg-green-600 text-white rounded"
                 >
                   Guardar
-                </button>
-                <button
-                  onClick={() => {
-                    setLocalText(aboutText); // restaura el valor original
-                    setEditingSection(null);
-                  }}
-                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded"
-                >
-                  Cancelar
                 </button>
               </div>
             </>
