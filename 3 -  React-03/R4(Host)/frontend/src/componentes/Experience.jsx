@@ -41,7 +41,8 @@ export default function Experience({
   };
 
   const handleAddExperience = () => {
-    const newExp = { role: "", company: "", date: "", description: "" };
+    // NO enviamos id, Supabase lo generará
+    const newExp = { role: "", company: "", date: "", description: "", link: "" };
     setExperienceList((prev) => [...prev, newExp]);
   };
 
@@ -70,6 +71,7 @@ export default function Experience({
   };
 
   const handleSaveExperience = async () => {
+    // Validación
     for (const exp of experienceList) {
       if (!exp.role.trim() || !exp.company.trim() || !exp.date.trim()) {
         setIsError(true);
@@ -84,6 +86,7 @@ export default function Experience({
 
       for (const exp of experienceList) {
         if (exp.id) {
+          // Actualizar experiencia existente
           const { error } = await supabase
             .from("experience")
             .update({
@@ -91,11 +94,13 @@ export default function Experience({
               company: exp.company,
               date: exp.date,
               description: exp.description,
+              link: exp.link,
             })
             .eq("id", exp.id);
           if (error) throw error;
           newExperienceList.push({ ...exp });
         } else {
+          // Insertar nueva experiencia (NO enviamos id)
           const { data, error } = await supabase
             .from("experience")
             .insert([
@@ -104,6 +109,7 @@ export default function Experience({
                 company: exp.company,
                 date: exp.date,
                 description: exp.description,
+                link: exp.link,
               },
             ])
             .select();
@@ -184,6 +190,11 @@ export default function Experience({
                     />
                   ) : (
                     <p className="text-gray-700">{exp.description}</p>
+                  )}
+                  {exp.link && !editingSection && (
+                    <a href={exp.link} className="text-blue-600 font-medium mt-1 inline-block">
+                      Saber más &gt;
+                    </a>
                   )}
                   {editingSection && (
                     <button
