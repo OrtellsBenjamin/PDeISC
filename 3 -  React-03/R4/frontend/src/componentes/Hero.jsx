@@ -7,69 +7,68 @@ export default function Hero({ heroRef, heroText, setHeroText, editingSection, s
   const [isError, setIsError] = useState(false);
   const [localText, setLocalText] = useState("");
 
+  useEffect(() => {
+    const fetchHero = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("hero")
+          .select("id, heroText, subText, updated_at")
+          .limit(1); // ⚠️ mejor que single()
+        if (error) throw error;
 
- useEffect(() => {
-  const fetchHero = async () => {
+        const heroData = data?.[0] || { heroText: "" };
+        setLocalText(heroData.heroText);
+        setHeroText(heroData.heroText);
+      } catch (err) {
+        console.error("Error cargando Hero:", err);
+      }
+    };
+    fetchHero();
+  }, [setHeroText]);
+
+  const handleSaveHero = async () => {
+    if (!localText.trim()) {
+      setIsError(true);
+      setSuccessMessage("El texto no puede estar vacío");
+      setTimeout(() => setSuccessMessage(""), 3000);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from("hero")
-        .select("id, heroText, subText, updated_at")
-        .single(); // porque solo vas a tener 1 fila
+        .select("id")
+        .limit(1);
+      if (error) throw error;
 
-      if (error && error.code !== "PGRST116") throw error;
+      const heroData = data?.[0];
+      if (heroData?.id) {
+        const { error: updateError } = await supabase
+          .from("hero")
+          .update({ heroText: localText })
+          .eq("id", heroData.id);
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("hero")
+          .insert({ heroText: localText });
+        if (insertError) throw insertError;
+      }
 
-      setLocalText(data?.heroText || "");
-      setHeroText(data?.heroText || "");
+      setIsError(false);
+      setSuccessMessage("Hero guardado correctamente");
+      setHeroText(localText);
+      setEditingSection(null);
+      setTimeout(() => setSuccessMessage(""), 4000);
     } catch (err) {
-      console.error("Error cargando hero:", err);
+      console.error("Error al guardar Hero:", err);
+      setIsError(true);
+      setSuccessMessage("Error al guardar Hero");
+      setTimeout(() => setSuccessMessage(""), 4000);
     }
   };
-  fetchHero();
-}, [setHeroText]);
 
-const handleSaveHero = async () => {
-  if (!localText.trim()) {
-    setIsError(true);
-    setSuccessMessage("El texto no puede estar vacío");
-    setTimeout(() => setSuccessMessage(""), 3000);
-    return;
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from("hero")
-      .select("id")
-      .single();
-
-    if (error && error.code !== "PGRST116") throw error;
-
-    if (data?.id) {
-      // ✅ actualizar heroText en lugar de text
-      const { error: updateError } = await supabase
-        .from("hero")
-        .update({ heroText: localText })
-        .eq("id", data.id);
-      if (updateError) throw updateError;
-    } else {
-      // ✅ insertar con heroText
-      const { error: insertError } = await supabase
-        .from("hero")
-        .insert({ heroText: localText });
-      if (insertError) throw insertError;
-    }
-
-    setIsError(false);
-    setSuccessMessage("Hero guardado correctamente");
-    setHeroText(localText);
-    setEditingSection(null);
-    setTimeout(() => setSuccessMessage(""), 4000);
-  } catch (err) {
-    console.error("Error al guardar Hero:", err);
-    setIsError(true);
-    setSuccessMessage("Error al guardar Hero");
-    setTimeout(() => setSuccessMessage(""), 4000);
-  }
-};
+  const handleChange = (e) => setLocalText(e.target.value);
 
   return (
     <section id="hero" ref={heroRef} className="h-[75vh] flex items-center px-6 py-12">
@@ -97,7 +96,8 @@ const handleSaveHero = async () => {
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={handleSaveHero}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                  className="px-4 py-2
+                  bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
                 >
                   Guardar
                 </button>
