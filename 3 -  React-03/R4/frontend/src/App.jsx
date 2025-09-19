@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createClient } from "@supabase/supabase-js"; 
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 import LoginModal from "./componentes/LoginModal";
 import Navbar from "./componentes/Navbar";
 import Hero from "./componentes/Hero";
@@ -9,17 +17,18 @@ import Experience from "./componentes/Experience";
 import { Github, Linkedin } from "lucide-react";
 
 export default function App() {
+  
   const [active, setActive] = useState("sobreMi");
   const [isLogged, setIsLogged] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [loginData, setLoginData] = useState({ user: "", pass: "" });
   const [editingSection, setEditingSection] = useState(null);
+  const [loginError, setLoginError] = useState("");
 
   const [sobreMiText, setSobreMiText] = useState("");
   const [aboutText, setAboutText] = useState("");
   const [projectsList, setProjectsList] = useState([]);
-
-  const [loginError, setLoginError] = useState(""); 
+  const [experienceList, setExperienceList] = useState([]);
 
   const sobreMiRef = useRef(null);
   const aboutRef = useRef(null);
@@ -33,11 +42,13 @@ export default function App() {
     experience: experienceRef,
   };
 
+  // Scroll smooth a secciones
   const handleScrollTo = (section) => {
     setActive(section);
     sections[section].current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // IntersectionObserver para detectar sección activa
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -48,46 +59,63 @@ export default function App() {
       { threshold: 0.5 }
     );
 
-    Object.values(sections).forEach((ref) => ref.current && observer.observe(ref.current));
+    Object.values(sections).forEach(
+      (ref) => ref.current && observer.observe(ref.current)
+    );
+
     return () =>
-      Object.values(sections).forEach((ref) => ref.current && observer.unobserve(ref.current));
+      Object.values(sections).forEach(
+        (ref) => ref.current && observer.unobserve(ref.current)
+      );
   }, []);
 
+  // Login simple
   const handleLogin = (e) => {
     e.preventDefault();
     if (loginData.user === "admin" && loginData.pass === "1234") {
       setIsLogged(true);
       setShowLogin(false);
     } else {
-      setLoginError("Credenciales incorrectas"); 
-      setTimeout(() => setLoginError(""), 4000); 
+      setLoginError("Credenciales incorrectas");
+      setTimeout(() => setLoginError(""), 4000);
     }
   };
 
+  // Fetch directo desde Supabase
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const heroRes = await fetch("http://localhost:3000/api/hero");
-        const heroData = await heroRes.json();
-        setSobreMiText(heroData.heroText || "");
-      } catch (err) {
-        console.error("Error cargando Hero:", err);
-      }
+        // Hero
+        const { data: heroData, error: heroError } = await supabase
+          .from("hero")
+          .select("*")
+          .single();
+        if (heroError) console.error("Error Hero:", heroError);
+        else setSobreMiText(heroData.heroText || "");
 
-      try {
-        const aboutRes = await fetch("http://localhost:3000/api/about");
-        const aboutData = await aboutRes.json();
-        setAboutText(aboutData.aboutText || "");
-      } catch (err) {
-        console.error("Error cargando About:", err);
-      }
+        // About
+        const { data: aboutData, error: aboutError } = await supabase
+          .from("about")
+          .select("*")
+          .single();
+        if (aboutError) console.error("Error About:", aboutError);
+        else setAboutText(aboutData.aboutText || "");
 
-      try {
-        const projectsRes = await fetch("http://localhost:3000/api/projects");
-        const projectsData = await projectsRes.json();
-        setProjectsList(projectsData);
+        // Projects
+        const { data: projectsData, error: projectsError } = await supabase
+          .from("projects")
+          .select("*");
+        if (projectsError) console.error("Error Projects:", projectsError);
+        else setProjectsList(projectsData || []);
+
+        // Experience
+        const { data: experienceData, error: experienceError } = await supabase
+          .from("experience")
+          .select("*");
+        if (experienceError) console.error("Error Experience:", experienceError);
+        else setExperienceList(experienceData || []);
       } catch (err) {
-        console.error("Error cargando Projects:", err);
+        console.error("Error general al cargar datos:", err);
       }
     };
 
@@ -137,6 +165,8 @@ export default function App() {
 
         <Experience
           experienceRef={experienceRef}
+          experienceList={experienceList}
+          setExperienceList={setExperienceList}
           editingSection={editingSection}
           setEditingSection={setEditingSection}
           isLogged={isLogged}
@@ -176,7 +206,6 @@ export default function App() {
         </p>
       </footer>
 
-  
       <AnimatePresence>
         {loginError && (
           <motion.div

@@ -14,7 +14,6 @@ export default function Projects({
   const [isError, setIsError] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  // Guardar proyectos en Supabase
   const handleSaveProjects = async () => {
     for (const proj of projectsList) {
       if (!proj.title.trim() || !proj.description.trim() || !proj.image.trim() || !proj.link_code.trim()) {
@@ -28,7 +27,7 @@ export default function Projects({
     try {
       const promises = projectsList.map(async (proj) => {
         if (proj.id) {
-          // actualizar proyecto existente
+       
           const { error } = await supabase
             .from("projects")
             .update({
@@ -53,7 +52,7 @@ export default function Projects({
             })
             .select();
           if (error) throw error;
-          proj.id = data[0].id; // asignamos el id generado
+          proj.id = data[0].id; 
         }
       });
 
@@ -72,13 +71,12 @@ export default function Projects({
     }
   };
 
-  // Agregar proyecto nuevo
+
   const handleAddProject = () => {
     const newProj = { title: "", description: "", image: "", tech: [], link_code: "#" };
     setProjectsList((prev) => [...prev, newProj]);
   };
 
-  // Eliminar proyecto
   const handleDeleteProject = async (index) => {
     const projToDelete = projectsList[index];
     if (!projToDelete) return;
