@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "../lib/supabaseClient"; // 👈 importa tu cliente
 
 export default function Projects({
   projectsRef,
@@ -14,13 +14,11 @@ export default function Projects({
   const [isError, setIsError] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
+  // Cargar proyectos desde Supabase
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const { data, error } = await supabase
-          .from("projects")
-          .select("id, title, description, image, tech, link_code"); // 👈 nada de "*"
-
+        const { data, error } = await supabase.from("projects").select("*");
         if (error) throw error;
 
         const safeData = (data || []).map((proj) => ({
@@ -41,6 +39,7 @@ export default function Projects({
     fetchProjects();
   }, [setProjectsList]);
 
+  // Guardar todos los proyectos en Supabase
   const handleSaveProjects = async () => {
     for (const proj of projectsList) {
       if (
@@ -50,9 +49,7 @@ export default function Projects({
         !proj.link_code.trim()
       ) {
         setIsError(true);
-        setSuccessMessage(
-          "Todos los campos deben estar completos antes de guardar"
-        );
+        setSuccessMessage("Todos los campos deben estar completos antes de guardar");
         setTimeout(() => setSuccessMessage(""), 4000);
         return;
       }
@@ -61,6 +58,7 @@ export default function Projects({
     try {
       const promises = projectsList.map(async (proj) => {
         if (proj.id) {
+          // actualizar
           const { error } = await supabase
             .from("projects")
             .update({
@@ -70,10 +68,11 @@ export default function Projects({
               tech: proj.tech,
               link_code: proj.link_code,
             })
-            .eq("id", Number(proj.id));
+            .eq("id", proj.id);
 
           if (error) throw error;
         } else {
+          // insertar
           const { data, error } = await supabase
             .from("projects")
             .insert([
@@ -88,11 +87,12 @@ export default function Projects({
             .select();
 
           if (error) throw error;
-          proj.id = data[0].id; // guardar el id nuevo
+          proj.id = data[0].id; // 👈 actualizar id en la lista
         }
       });
 
       await Promise.all(promises);
+
       setProjectsList([...projectsList]);
       setIsError(false);
       setSuccessMessage("¡Proyectos guardados correctamente!");
@@ -106,6 +106,7 @@ export default function Projects({
     }
   };
 
+  // Agregar un nuevo proyecto
   const handleAddProject = () => {
     const newProj = {
       title: "",
@@ -117,20 +118,20 @@ export default function Projects({
     setProjectsList((prev) => [...prev, newProj]);
   };
 
+  // Eliminar proyecto en Supabase
   const handleDeleteProject = async (index) => {
     const projToDelete = projectsList[index];
     if (!projToDelete) return;
 
     try {
       if (projToDelete.id) {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("projects")
           .delete()
-          .eq("id", Number(projToDelete.id)) // 👈 forzamos number
+          .eq("id", Number(projToDelete.id))
           .select();
 
         if (error) throw error;
-        console.log("Proyecto eliminado de la DB:", data);
       }
 
       const newList = [...projectsList];
@@ -160,10 +161,7 @@ export default function Projects({
         {editingSection === "projects" ? (
           <div className="space-y-4">
             {projectsList.map((proj, i) => (
-              <div
-                key={proj.id || i}
-                className="flex flex-col gap-2 border p-2 rounded"
-              >
+              <div key={proj.id || i} className="flex flex-col gap-2 border p-2 rounded">
                 <input
                   value={proj.title}
                   onChange={(e) => {
@@ -274,11 +272,7 @@ export default function Projects({
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.3 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{
-              opacity: 0,
-              scale: 0.5,
-              transition: { duration: 0.2 },
-            }}
+            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
             className={`fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-xl z-[9999] font-medium ${
               isError
                 ? "bg-red-500 text-white border border-red-600"
