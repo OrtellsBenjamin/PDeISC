@@ -3,8 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Briefcase } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 
-export default function Experience({ experienceRef, editingSection, setEditingSection, isLogged }) {
-  const [experienceList, setExperienceList] = useState([]);
+export default function Experience({
+  experienceRef,
+  experienceList,
+  setExperienceList,
+  editingSection,
+  setEditingSection,
+  isLogged,
+}) {
   const [successMessage, setSuccessMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -23,7 +29,7 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
       }
     };
     fetchExperience();
-  }, []);
+  }, [setExperienceList]);
 
   const handleChange = (i, field, value) => {
     const newList = [...experienceList];
@@ -45,10 +51,7 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
 
     try {
       if (expToDelete.id) {
-        const { error } = await supabase
-          .from("experience")
-          .delete()
-          .eq("id", expToDelete.id);
+        const { error } = await supabase.from("experience").delete().eq("id", expToDelete.id);
         if (error) throw error;
       }
       const newList = [...experienceList];
@@ -67,68 +70,62 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
   };
 
   const handleSaveExperience = async () => {
-  // Validación básica
-  for (const exp of experienceList) {
-    if (!exp.role.trim() || !exp.company.trim() || !exp.date.trim()) {
-      setIsError(true);
-      setSuccessMessage("Role, Company y Date son obligatorios");
-      setTimeout(() => setSuccessMessage(""), 4000);
-      return;
-    }
-  }
-
-  try {
-    const newExperienceList = [];
-
-    // Recorremos cada experiencia y guardamos/actualizamos
     for (const exp of experienceList) {
-      if (exp.id) {
-        const { error } = await supabase
-          .from("experience")
-          .update({
-            role: exp.role,
-            company: exp.company,
-            date: exp.date,
-            description: exp.description,
-            link: exp.link,
-          })
-          .eq("id", exp.id);
-        if (error) throw error;
+      if (!exp.role.trim() || !exp.company.trim() || !exp.date.trim()) {
+        setIsError(true);
+        setSuccessMessage("Role, Company y Date son obligatorios");
+        setTimeout(() => setSuccessMessage(""), 4000);
+        return;
+      }
+    }
 
-        newExperienceList.push({ ...exp }); // mantener el mismo ID
-      } else {
-        const { data, error } = await supabase
-          .from("experience")
-          .insert([
-            {
+    try {
+      const newExperienceList = [];
+
+      for (const exp of experienceList) {
+        if (exp.id) {
+          const { error } = await supabase
+            .from("experience")
+            .update({
               role: exp.role,
               company: exp.company,
               date: exp.date,
               description: exp.description,
               link: exp.link,
-            },
-          ])
-          .select();
-        if (error) throw error;
-
-        // Guardamos el ID retornado por Supabase
-        newExperienceList.push({ ...exp, id: data[0].id });
+            })
+            .eq("id", exp.id);
+          if (error) throw error;
+          newExperienceList.push({ ...exp });
+        } else {
+          const { data, error } = await supabase
+            .from("experience")
+            .insert([
+              {
+                role: exp.role,
+                company: exp.company,
+                date: exp.date,
+                description: exp.description,
+                link: exp.link,
+              },
+            ])
+            .select();
+          if (error) throw error;
+          newExperienceList.push({ ...exp, id: data[0].id });
+        }
       }
+
+      setExperienceList(newExperienceList);
+      setEditingSection(null);
+      setIsError(false);
+      setSuccessMessage("Experiencias guardadas correctamente");
+      setTimeout(() => setSuccessMessage(""), 4000);
+    } catch (err) {
+      console.error(err);
+      setIsError(true);
+      setSuccessMessage("Error al guardar experiencias");
+      setTimeout(() => setSuccessMessage(""), 4000);
     }
-
-    setExperienceList(newExperienceList);
-    setEditingSection(null);
-    setIsError(false);
-    setSuccessMessage("Experiencias guardadas correctamente");
-    setTimeout(() => setSuccessMessage(""), 4000);
-  } catch (err) {
-    console.error(err);
-    setIsError(true);
-    setSuccessMessage("Error al guardar experiencias");
-    setTimeout(() => setSuccessMessage(""), 4000);
-  }
-};
-
+  };
 
   return (
     <section id="experience" ref={experienceRef} className="h-auto py-16 px-6">
@@ -223,7 +220,6 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
             >
               Guardar
             </button>
-      
           </div>
         )}
 
