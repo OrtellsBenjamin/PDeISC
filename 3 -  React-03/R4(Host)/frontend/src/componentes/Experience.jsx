@@ -18,9 +18,10 @@ export default function Experience({
   useEffect(() => {
     const fetchExperience = async () => {
       try {
+        // Especificar las columnas existentes evita errores de caché
         const { data, error } = await supabase
           .from("experience")
-          .select("*")
+          .select("id, role, company, date, description")
           .order("id", { ascending: true });
         if (error) throw error;
         setExperienceList(data || []);
@@ -87,7 +88,6 @@ export default function Experience({
 
       for (const exp of experienceList) {
         if (exp.id) {
-          // Actualizar experiencia existente
           const { error } = await supabase
             .from("experience")
             .update({
@@ -100,7 +100,6 @@ export default function Experience({
           if (error) throw error;
           newExperienceList.push({ ...exp });
         } else {
-          // Insertar nueva experiencia
           const { data, error } = await supabase
             .from("experience")
             .insert([
@@ -111,7 +110,7 @@ export default function Experience({
                 description: exp.description,
               },
             ])
-            .select();
+            .select("id, role, company, date, description");
           if (error) throw error;
           newExperienceList.push({ ...exp, id: data[0].id });
         }

@@ -31,11 +31,11 @@ export default function App() {
   const [loginMessage, setLoginMessage] = useState("");
   const [loginError, setLoginError] = useState(false);
 
-// ...imports
+
 useEffect(() => {
   const fetchData = async () => {
     try {
-      // Hero
+      
       const { data: heroData, error: heroError } = await supabase
         .from("hero")
         .select("heroTitle, heroText")
@@ -44,7 +44,6 @@ useEffect(() => {
       setHeroTitle(heroData?.heroTitle || "");
       setHeroText(heroData?.heroText || "");
 
-      // About (cambiar "aboutText" según tu columna)
       const { data: aboutData, error: aboutError } = await supabase
         .from("about")
         .select("aboutText")
@@ -52,7 +51,7 @@ useEffect(() => {
       if (aboutError) throw aboutError;
       setAboutText(aboutData?.aboutText || "");
 
-      // Experience (sin link)
+
       const { data: expData, error: expError } = await supabase
         .from("experience")
         .select("*")
@@ -60,7 +59,6 @@ useEffect(() => {
       if (expError) throw expError;
       setExperienceList(expData || []);
 
-      // Projects
       const { data: projData, error: projError } = await supabase
         .from("projects")
         .select("*");
