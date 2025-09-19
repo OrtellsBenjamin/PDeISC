@@ -34,7 +34,7 @@ export default function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Hero
+       
         const { data: heroData, error: heroError } = await supabase
           .from("hero")
           .select("heroTitle, heroText")
@@ -43,7 +43,6 @@ export default function App() {
         setHeroTitle(heroData?.heroTitle || "");
         setHeroText(heroData?.heroText || "");
 
-        // About
         const { data: aboutData, error: aboutError } = await supabase
           .from("about")
           .select("text")
@@ -51,7 +50,6 @@ export default function App() {
         if (aboutError) throw aboutError;
         setAboutText(aboutData?.text || "");
 
-        // Experience
         const { data: expData, error: expError } = await supabase
           .from("experience")
           .select("*")
@@ -59,7 +57,6 @@ export default function App() {
         if (expError) throw expError;
         setExperienceList(expData || []);
 
-        // Projects
         const { data: projData, error: projError } = await supabase
           .from("projects")
           .select("*");
@@ -121,7 +118,7 @@ export default function App() {
       />
 
       <main className="relative flex-1">
-        {/* Fondo de cuadrícula */}
+     
         <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]"></div>
 
         <Hero
