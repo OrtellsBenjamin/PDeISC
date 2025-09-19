@@ -7,9 +7,9 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
   const [experienceList, setExperienceList] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
   const [isError, setIsError] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(null); // ✅ Inicialización correcta
+  const [confirmDelete, setConfirmDelete] = useState(null); // ✅ Estado definido correctamente
 
-  // Cargar experiencias
+  // Cargar experiencias desde Supabase
   useEffect(() => {
     const fetchExperience = async () => {
       try {
@@ -19,7 +19,12 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
           .order("date", { ascending: false });
         if (error && error.code !== "PGRST116") throw error;
 
-        setExperienceList((data || []).map((exp) => ({ ...exp, link: exp.link || "" })));
+        const formattedData = data.map((exp) => ({
+          ...exp,
+          link: exp.link || "",
+        }));
+
+        setExperienceList(formattedData);
       } catch (err) {
         console.error("Error cargando experiencias:", err);
       }
@@ -63,6 +68,7 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
     setExperienceList(newList);
     setSuccessMessage("Experiencia eliminada correctamente");
     setTimeout(() => setSuccessMessage(""), 4000);
+    setConfirmDelete(null); // ✅ Asegura que se cierre el modal
   };
 
   const handleSaveExperience = async () => {
@@ -165,18 +171,8 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
         )}
       </div>
 
+      {/* Modal de confirmación */}
       <AnimatePresence>
-        {successMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.3 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
-            className={`fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-xl z-[9999] font-medium ${isError ? "bg-red-500 text-white" : "bg-green-500 text-white"}`}
-          >
-            {successMessage}
-          </motion.div>
-        )}
-
         {confirmDelete !== null && (
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.3 }}
@@ -186,9 +182,20 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
           >
             <span>¿Seguro que quiere eliminar esta experiencia?</span>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => { handleDeleteExperience(confirmDelete); setConfirmDelete(null); }} className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Sí</button>
+              <button onClick={() => handleDeleteExperience(confirmDelete)} className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Sí</button>
               <button onClick={() => setConfirmDelete(null)} className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-800">No</button>
             </div>
+          </motion.div>
+        )}
+
+        {successMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.3 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+            className={`fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-xl z-[9999] font-medium ${isError ? "bg-red-500 text-white" : "bg-green-500 text-white"}`}
+          >
+            {successMessage}
           </motion.div>
         )}
       </AnimatePresence>
