@@ -6,53 +6,58 @@ export default function About({ aboutRef, aboutText, setAboutText, editingSectio
   const [successMessage, setSuccessMessage] = useState("");
   const [isError, setIsError] = useState(false);
 
-  // Cargar texto de "About" desde Supabase al montar
   useEffect(() => {
-    const fetchAbout = async () => {
-      try {
-        const { data, error } = await supabase.from("about").select("text").single();
-        if (error && error.code !== "PGRST116") throw error; // PGRST116 = no hay filas
-        setLocalText(data?.text || "");
-        setAboutText(data?.text || "");
-      } catch (err) {
-        console.error("Error cargando About:", err);
-      }
-    };
-    fetchAbout();
-  }, [setAboutText]);
-
-  const handleSaveAbout = async () => {
-    if (!localText.trim()) {
-      setIsError(true);
-      setSuccessMessage("El texto no puede estar vacío");
-      setTimeout(() => setSuccessMessage(""), 3000);
-      return;
-    }
-
+  const fetchAbout = async () => {
     try {
-      const { data, error } = await supabase.from("about").select("id").single();
-      if (error && error.code !== "PGRST116") throw error;
-
-      if (data?.id) {
-        const { error: updateError } = await supabase.from("about").update({ text: localText }).eq("id", data.id);
-        if (updateError) throw updateError;
-      } else {
-        const { error: insertError } = await supabase.from("about").insert({ text: localText });
-        if (insertError) throw insertError;
-      }
-
-      setAboutText(localText);
-      setEditingSection(null);
-      setIsError(false);
-      setSuccessMessage("About guardado correctamente");
-      setTimeout(() => setSuccessMessage(""), 4000);
+      const { data, error } = await supabase.from("about").select("aboutText").single();
+      if (error && error.code !== "PGRST116") throw error; 
+      setLocalText(data?.aboutText || "");
+      setAboutText(data?.aboutText || "");
     } catch (err) {
-      console.error("Error guardando About:", err);
-      setIsError(true);
-      setSuccessMessage("Error al guardar About");
-      setTimeout(() => setSuccessMessage(""), 4000);
+      console.error("Error cargando About:", err);
     }
   };
+  fetchAbout();
+}, [setAboutText]);
+
+const handleSaveAbout = async () => {
+  if (!localText.trim()) {
+    setIsError(true);
+    setSuccessMessage("El texto no puede estar vacío");
+    setTimeout(() => setSuccessMessage(""), 3000);
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase.from("about").select("id").single();
+    if (error && error.code !== "PGRST116") throw error;
+
+    if (data?.id) {
+      const { error: updateError } = await supabase
+        .from("about")
+        .update({ aboutText: localText })
+        .eq("id", data.id);
+      if (updateError) throw updateError;
+    } else {
+      const { error: insertError } = await supabase
+        .from("about")
+        .insert({ aboutText: localText });
+      if (insertError) throw insertError;
+    }
+
+    setAboutText(localText);
+    setEditingSection(null);
+    setIsError(false);
+    setSuccessMessage("About guardado correctamente");
+    setTimeout(() => setSuccessMessage(""), 4000);
+  } catch (err) {
+    console.error("Error guardando About:", err);
+    setIsError(true);
+    setSuccessMessage("Error al guardar About");
+    setTimeout(() => setSuccessMessage(""), 4000);
+  }
+};
+
 
   return (
     <section id="about" ref={aboutRef} className="min-h-screen flex flex-col md:flex-row items-center px-6 py-16 gap-20">
