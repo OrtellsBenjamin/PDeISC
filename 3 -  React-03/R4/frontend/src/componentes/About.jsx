@@ -12,8 +12,8 @@ export default function About({ aboutRef, aboutText, setAboutText, editingSectio
         const { data, error } = await supabase
           .from("about")
           .select("id, aboutText, updated_at")
-          .limit(1); // ⚠️ mejor que single()
-        if (error) throw error;
+          .limit(1);
+        if (error && error.code !== "PGRST116") throw error;
 
         const aboutData = data?.[0] || { aboutText: "" };
         setLocalText(aboutData.aboutText);
@@ -72,27 +72,32 @@ export default function About({ aboutRef, aboutText, setAboutText, editingSectio
       <div className="max-w-4xl w-full mx-auto flex flex-col md:flex-row items-center gap-8">
         <div className="flex-1 space-y-6 text-gray-800 text-lg leading-relaxed md:mr-auto mt-20">
           <h2 className="text-2xl md:text-3xl font-bold mb-4">Sobre mí</h2>
-          {editingSection === "about" ? (
-            <textarea
-              className="w-full border p-2 rounded text-gray-800"
-              value={localText}
-              onChange={(e) => setLocalText(e.target.value)}
-              rows={6}
-            />
+          {editingSection === "about" && isLogged ? (
+            <>
+              <textarea
+                className="w-full border p-2 rounded text-gray-800"
+                value={localText}
+                onChange={(e) => setLocalText(e.target.value)}
+                rows={6}
+              />
+              <button onClick={handleSaveAbout} className="mt-2 px-4 py-2 bg-green-600 text-white rounded">
+                Guardar
+              </button>
+              <button onClick={() => setEditingSection(null)} className="mt-2 px-4 py-2 bg-gray-300 text-gray-800 rounded ml-2">
+                Cancelar
+              </button>
+            </>
           ) : (
             <p className="text-gray-700">{localText}</p>
           )}
-          {editingSection === "about" && isLogged && (
-            <button onClick={handleSaveAbout} className="mt-2 px-4 py-2 bg-green-600 text-white rounded">
-              Guardar
-            </button>
-          )}
+
           {isLogged && editingSection !== "about" && (
             <button onClick={() => setEditingSection("about")} className="mt-4 text-sm text-blue-600 underline">
               Editar
             </button>
           )}
         </div>
+
         <div className="flex-1 flex justify-center md:justify-end">
           <img
             src="https://content.elmueble.com/medio/2024/06/04/golden-retriever_c97b1fdd_240604125307_900x900.jpg"

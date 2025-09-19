@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "./lib/supabaseClient";
 
-
 import LoginModal from "./componentes/LoginModal";
 import Navbar from "./componentes/Navbar";
 import Hero from "./componentes/Hero";
@@ -12,7 +11,6 @@ import Experience from "./componentes/Experience";
 import { Github, Linkedin } from "lucide-react";
 
 export default function App() {
-  
   const [active, setActive] = useState("sobreMi");
   const [isLogged, setIsLogged] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
@@ -43,7 +41,7 @@ export default function App() {
     sections[section].current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // IntersectionObserver para detectar sección activa
+  // IntersectionObserver para sección activa
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -76,7 +74,7 @@ export default function App() {
     }
   };
 
-  // Fetch directo desde Supabase
+  // Fetch inicial desde Supabase
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -84,17 +82,17 @@ export default function App() {
         const { data: heroData, error: heroError } = await supabase
           .from("hero")
           .select("*")
-          .single();
+          .limit(1);
         if (heroError) console.error("Error Hero:", heroError);
-        else setSobreMiText(heroData.heroText || "");
+        else setSobreMiText(heroData?.[0]?.heroText || "");
 
         // About
         const { data: aboutData, error: aboutError } = await supabase
           .from("about")
           .select("*")
-          .single();
+          .limit(1);
         if (aboutError) console.error("Error About:", aboutError);
-        else setAboutText(aboutData.aboutText || "");
+        else setAboutText(aboutData?.[0]?.aboutText || "");
 
         // Projects
         const { data: projectsData, error: projectsError } = await supabase

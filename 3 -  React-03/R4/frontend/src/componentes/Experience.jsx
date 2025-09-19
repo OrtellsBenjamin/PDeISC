@@ -13,14 +13,12 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
   useEffect(() => {
     const fetchExperience = async () => {
       try {
-        // Especificamos las columnas explícitamente
         const { data, error } = await supabase
           .from("experience")
           .select("id, role, company, date, description, link")
           .order("date", { ascending: false });
-        if (error) throw error;
+        if (error && error.code !== "PGRST116") throw error;
 
-        // Aseguramos que link no sea null
         const formattedData = data.map((exp) => ({
           ...exp,
           link: exp.link || "",
