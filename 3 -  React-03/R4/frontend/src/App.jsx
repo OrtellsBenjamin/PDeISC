@@ -1,12 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { createClient } from "@supabase/supabase-js"; 
+import { supabase } from "./lib/supabaseClient";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 import LoginModal from "./componentes/LoginModal";
 import Navbar from "./componentes/Navbar";
