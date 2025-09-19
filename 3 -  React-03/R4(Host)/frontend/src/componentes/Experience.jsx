@@ -42,7 +42,7 @@ export default function Experience({
 
   const handleAddExperience = () => {
     // NO enviamos id, Supabase lo generará
-    const newExp = { role: "", company: "", date: "", description: "", link: "" };
+    const newExp = { role: "", company: "", date: "", description: ""};
     setExperienceList((prev) => [...prev, newExp]);
   };
 
@@ -94,7 +94,7 @@ export default function Experience({
               company: exp.company,
               date: exp.date,
               description: exp.description,
-              link: exp.link,
+  
             })
             .eq("id", exp.id);
           if (error) throw error;
@@ -109,7 +109,6 @@ export default function Experience({
                 company: exp.company,
                 date: exp.date,
                 description: exp.description,
-                link: exp.link,
               },
             ])
             .select();
@@ -190,11 +189,6 @@ export default function Experience({
                     />
                   ) : (
                     <p className="text-gray-700">{exp.description}</p>
-                  )}
-                  {exp.link && !editingSection && (
-                    <a href={exp.link} className="text-blue-600 font-medium mt-1 inline-block">
-                      Saber más &gt;
-                    </a>
                   )}
                   {editingSection && (
                     <button
