@@ -31,43 +31,48 @@ export default function App() {
   const [loginMessage, setLoginMessage] = useState("");
   const [loginError, setLoginError] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-       
-        const { data: heroData, error: heroError } = await supabase
-          .from("hero")
-          .select("heroTitle, heroText")
-          .single();
-        if (heroError) throw heroError;
-        setHeroTitle(heroData?.heroTitle || "");
-        setHeroText(heroData?.heroText || "");
+// ...imports
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      // Hero
+      const { data: heroData, error: heroError } = await supabase
+        .from("hero")
+        .select("heroTitle, heroText")
+        .single();
+      if (heroError) throw heroError;
+      setHeroTitle(heroData?.heroTitle || "");
+      setHeroText(heroData?.heroText || "");
 
-        const { data: aboutData, error: aboutError } = await supabase
-          .from("about")
-          .select("text")
-          .single();
-        if (aboutError) throw aboutError;
-        setAboutText(aboutData?.text || "");
+      // About (cambiar "aboutText" según tu columna)
+      const { data: aboutData, error: aboutError } = await supabase
+        .from("about")
+        .select("aboutText")
+        .single();
+      if (aboutError) throw aboutError;
+      setAboutText(aboutData?.aboutText || "");
 
-        const { data: expData, error: expError } = await supabase
-          .from("experience")
-          .select("*")
-          .order("id", { ascending: true });
-        if (expError) throw expError;
-        setExperienceList(expData || []);
+      // Experience (sin link)
+      const { data: expData, error: expError } = await supabase
+        .from("experience")
+        .select("*")
+        .order("id", { ascending: true });
+      if (expError) throw expError;
+      setExperienceList(expData || []);
 
-        const { data: projData, error: projError } = await supabase
-          .from("projects")
-          .select("*");
-        if (projError) throw projError;
-        setProjectsList(projData || []);
-      } catch (err) {
-        console.error("Error cargando datos iniciales:", err.message);
-      }
-    };
-    fetchData();
-  }, []);
+      // Projects
+      const { data: projData, error: projError } = await supabase
+        .from("projects")
+        .select("*");
+      if (projError) throw projError;
+      setProjectsList(projData || []);
+    } catch (err) {
+      console.error("Error cargando datos iniciales:", err.message);
+    }
+  };
+  fetchData();
+}, []);
+
 
   const handleScrollTo = (id) => {
     let ref = null;
