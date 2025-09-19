@@ -41,6 +41,7 @@ export default function Experience({
   };
 
   const handleAddExperience = () => {
+    // NO enviamos id, Supabase lo generará
     const newExp = { role: "", company: "", date: "", description: "", link: "" };
     setExperienceList((prev) => [...prev, newExp]);
   };
@@ -70,10 +71,11 @@ export default function Experience({
   };
 
   const handleSaveExperience = async () => {
+    // Validación
     for (const exp of experienceList) {
       if (!exp.role.trim() || !exp.company.trim() || !exp.date.trim()) {
         setIsError(true);
-        setSuccessMessage("Role, Company y Date son obligatorios");
+        setSuccessMessage("Rol, Compañía y Fecha son obligatorios");
         setTimeout(() => setSuccessMessage(""), 4000);
         return;
       }
@@ -84,6 +86,7 @@ export default function Experience({
 
       for (const exp of experienceList) {
         if (exp.id) {
+          // Actualizar experiencia existente
           const { error } = await supabase
             .from("experience")
             .update({
@@ -97,6 +100,7 @@ export default function Experience({
           if (error) throw error;
           newExperienceList.push({ ...exp });
         } else {
+          // Insertar nueva experiencia (NO enviamos id)
           const { data, error } = await supabase
             .from("experience")
             .insert([
