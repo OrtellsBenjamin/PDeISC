@@ -67,60 +67,68 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
   };
 
   const handleSaveExperience = async () => {
-    for (const exp of experienceList) {
-      if (!exp.role.trim() || !exp.company.trim() || !exp.date.trim()) {
-        setIsError(true);
-        setSuccessMessage("Role, Company y Date son obligatorios");
-        setTimeout(() => setSuccessMessage(""), 4000);
-        return;
-      }
+  // Validación básica
+  for (const exp of experienceList) {
+    if (!exp.role.trim() || !exp.company.trim() || !exp.date.trim()) {
+      setIsError(true);
+      setSuccessMessage("Role, Company y Date son obligatorios");
+      setTimeout(() => setSuccessMessage(""), 4000);
+      return;
     }
+  }
 
-    try {
-      const promises = experienceList.map(async (exp) => {
-        if (exp.id) {
-          const { error } = await supabase
-            .from("experience")
-            .update({
+  try {
+    const newExperienceList = [];
+
+    // Recorremos cada experiencia y guardamos/actualizamos
+    for (const exp of experienceList) {
+      if (exp.id) {
+        const { error } = await supabase
+          .from("experience")
+          .update({
+            role: exp.role,
+            company: exp.company,
+            date: exp.date,
+            description: exp.description,
+            link: exp.link,
+          })
+          .eq("id", exp.id);
+        if (error) throw error;
+
+        newExperienceList.push({ ...exp }); // mantener el mismo ID
+      } else {
+        const { data, error } = await supabase
+          .from("experience")
+          .insert([
+            {
               role: exp.role,
               company: exp.company,
               date: exp.date,
               description: exp.description,
               link: exp.link,
-            })
-            .eq("id", exp.id);
-          if (error) throw error;
-        } else {
-          const { data, error } = await supabase
-            .from("experience")
-            .insert([
-              {
-                role: exp.role,
-                company: exp.company,
-                date: exp.date,
-                description: exp.description,
-                link: exp.link,
-              },
-            ])
-            .select();
-          if (error) throw error;
-          exp.id = data[0].id;
-        }
-      });
+            },
+          ])
+          .select();
+        if (error) throw error;
 
-      await Promise.all(promises);
-      setExperienceList([...experienceList]);
-      setEditingSection(null);
-      setIsError(false);
-      setSuccessMessage("Experiencias guardadas correctamente");
-      setTimeout(() => setSuccessMessage(""), 4000);
-    } catch (err) {
-      console.error(err);
-      setIsError(true);
-      setSuccessMessage("Error al guardar experiencias");
-      setTimeout(() => setSuccessMessage(""), 4000);
+        // Guardamos el ID retornado por Supabase
+        newExperienceList.push({ ...exp, id: data[0].id });
+      }
     }
-  };
+
+    setExperienceList(newExperienceList);
+    setEditingSection(null);
+    setIsError(false);
+    setSuccessMessage("Experiencias guardadas correctamente");
+    setTimeout(() => setSuccessMessage(""), 4000);
+  } catch (err) {
+    console.error(err);
+    setIsError(true);
+    setSuccessMessage("Error al guardar experiencias");
+    setTimeout(() => setSuccessMessage(""), 4000);
+  }
+};
+
 
   return (
     <section id="experience" ref={experienceRef} className="h-auto py-16 px-6">
