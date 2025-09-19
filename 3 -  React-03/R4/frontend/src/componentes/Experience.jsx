@@ -13,9 +13,20 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
   useEffect(() => {
     const fetchExperience = async () => {
       try {
-        const { data, error } = await supabase.from("experience").select("*").order("date", { ascending: false });
+        // Especificamos las columnas explícitamente
+        const { data, error } = await supabase
+          .from("experience")
+          .select("id, role, company, date, description, link")
+          .order("date", { ascending: false });
         if (error) throw error;
-        setExperienceList(data);
+
+        // Aseguramos que link no sea null
+        const formattedData = data.map((exp) => ({
+          ...exp,
+          link: exp.link || "",
+        }));
+
+        setExperienceList(formattedData);
       } catch (err) {
         console.error("Error cargando experiencias:", err);
       }
@@ -77,7 +88,7 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
           const { error } = await supabase.from("experience").update(exp).eq("id", exp.id);
           if (error) throw error;
         } else {
-          const { data, error } = await supabase.from("experience").insert(exp).select();
+          const { data, error } = await supabase.from("experience").insert(exp).select("id");
           if (error) throw error;
           exp.id = data[0].id;
         }

@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabaseClient";
 
 export default function Hero({ heroRef, heroText, setHeroText, editingSection, setEditingSection, isLogged }) {
+  const [localText, setLocalText] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isError, setIsError] = useState(false);
-  const [localText, setLocalText] = useState("");
 
   useEffect(() => {
     const fetchHero = async () => {
@@ -13,14 +13,14 @@ export default function Hero({ heroRef, heroText, setHeroText, editingSection, s
         const { data, error } = await supabase
           .from("hero")
           .select("id, heroText, subText, updated_at")
-          .limit(1); // ⚠️ mejor que single()
-        if (error) throw error;
+          .single();
 
-        const heroData = data?.[0] || { heroText: "" };
-        setLocalText(heroData.heroText);
-        setHeroText(heroData.heroText);
+        if (error && error.code !== "PGRST116") throw error;
+
+        setLocalText(data?.heroText || ""); // aseguramos que no sea null
+        setHeroText(data?.heroText || "");
       } catch (err) {
-        console.error("Error cargando Hero:", err);
+        console.error("Error cargando hero:", err);
       }
     };
     fetchHero();
@@ -35,18 +35,14 @@ export default function Hero({ heroRef, heroText, setHeroText, editingSection, s
     }
 
     try {
-      const { data, error } = await supabase
-        .from("hero")
-        .select("id")
-        .limit(1);
-      if (error) throw error;
+      const { data, error } = await supabase.from("hero").select("id").single();
+      if (error && error.code !== "PGRST116") throw error;
 
-      const heroData = data?.[0];
-      if (heroData?.id) {
+      if (data?.id) {
         const { error: updateError } = await supabase
           .from("hero")
           .update({ heroText: localText })
-          .eq("id", heroData.id);
+          .eq("id", data.id);
         if (updateError) throw updateError;
       } else {
         const { error: insertError } = await supabase
@@ -55,10 +51,10 @@ export default function Hero({ heroRef, heroText, setHeroText, editingSection, s
         if (insertError) throw insertError;
       }
 
-      setIsError(false);
-      setSuccessMessage("Hero guardado correctamente");
       setHeroText(localText);
       setEditingSection(null);
+      setIsError(false);
+      setSuccessMessage("Hero guardado correctamente");
       setTimeout(() => setSuccessMessage(""), 4000);
     } catch (err) {
       console.error("Error al guardar Hero:", err);
@@ -67,8 +63,6 @@ export default function Hero({ heroRef, heroText, setHeroText, editingSection, s
       setTimeout(() => setSuccessMessage(""), 4000);
     }
   };
-
-  const handleChange = (e) => setLocalText(e.target.value);
 
   return (
     <section id="hero" ref={heroRef} className="h-[75vh] flex items-center px-6 py-12">
@@ -90,14 +84,13 @@ export default function Hero({ heroRef, heroText, setHeroText, editingSection, s
             <>
               <textarea
                 value={localText}
-                onChange={handleChange}
+                onChange={(e) => setLocalText(e.target.value)}
                 className="border p-2 rounded w-full"
               />
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={handleSaveHero}
-                  className="px-4 py-2
-                  bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
                 >
                   Guardar
                 </button>
@@ -131,9 +124,7 @@ export default function Hero({ heroRef, heroText, setHeroText, editingSection, s
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
             className={`fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-xl z-[9999] font-medium ${
-              isError
-                ? "bg-red-500 text-white border border-red-600"
-                : "bg-green-500 text-white border border-green-600"
+              isError ? "bg-red-500 text-white border border-red-600" : "bg-green-500 text-white border border-green-600"
             }`}
           >
             {successMessage}
