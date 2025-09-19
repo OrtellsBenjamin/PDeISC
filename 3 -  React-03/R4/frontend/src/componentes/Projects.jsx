@@ -7,7 +7,7 @@ export default function Projects({ projectsRef, projectsList, setProjectsList, e
   const [isError, setIsError] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  // Cargar proyectos
+  // Cargar proyectos desde Supabase
   useEffect(() => {
     const fetchProjects = async () => {
       try {

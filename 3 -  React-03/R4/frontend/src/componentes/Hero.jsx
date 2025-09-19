@@ -17,7 +17,7 @@ export default function Hero({ heroRef, heroText, setHeroText, editingSection, s
 
         if (error && error.code !== "PGRST116") throw error;
 
-        setLocalText(data?.heroText || ""); // aseguramos que no sea null
+        setLocalText(data?.heroText || "");
         setHeroText(data?.heroText || "");
       } catch (err) {
         console.error("Error cargando hero:", err);
