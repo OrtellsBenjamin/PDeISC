@@ -7,7 +7,7 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
   const [experienceList, setExperienceList] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
   const [isError, setIsError] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null); // ✅ Inicialización correcta
 
   // Cargar experiencias
   useEffect(() => {
@@ -27,7 +27,6 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
     fetchExperience();
   }, []);
 
-  // Cambios en los campos
   const handleChange = (i, field, value) => {
     const newList = [...experienceList];
     if (field === "role" || field === "company") {
@@ -37,13 +36,11 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
     setExperienceList(newList);
   };
 
-  // Agregar experiencia
   const handleAddExperience = () => {
     const newExp = { role: "", company: "", date: "", description: "", link: "" };
     setExperienceList((prev) => [...prev, newExp]);
   };
 
-  // Eliminar experiencia
   const handleDeleteExperience = async (index) => {
     const expToDelete = experienceList[index];
     if (!expToDelete) return;
@@ -68,7 +65,6 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
     setTimeout(() => setSuccessMessage(""), 4000);
   };
 
-  // Guardar experiencias
   const handleSaveExperience = async () => {
     for (const exp of experienceList) {
       if (!exp.role.trim() || !exp.company.trim() || !exp.date.trim()) {
@@ -105,6 +101,7 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
       setTimeout(() => setSuccessMessage(""), 4000);
     }
   };
+
   return (
     <section id="experience" ref={experienceRef} className="h-auto py-16 px-6">
       <div className="max-w-4xl mx-auto">
@@ -170,13 +167,23 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
 
       <AnimatePresence>
         {successMessage && (
-          <motion.div initial={{ opacity: 0, y: 50, scale: 0.3 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }} className={`fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-xl z-[9999] font-medium ${isError ? "bg-red-500 text-white" : "bg-green-500 text-white"}`}>
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.3 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+            className={`fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-xl z-[9999] font-medium ${isError ? "bg-red-500 text-white" : "bg-green-500 text-white"}`}
+          >
             {successMessage}
           </motion.div>
         )}
 
         {confirmDelete !== null && (
-          <motion.div initial={{ opacity: 0, y: 50, scale: 0.3 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }} className="fixed bottom-6 right-6 px-6 py-4 rounded-lg shadow-xl z-[9999] bg-yellow-400 text-black font-medium flex flex-col gap-2">
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.3 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+            className="fixed bottom-6 right-6 px-6 py-4 rounded-lg shadow-xl z-[9999] bg-yellow-400 text-black font-medium flex flex-col gap-2"
+          >
             <span>¿Seguro que quiere eliminar esta experiencia?</span>
             <div className="flex gap-2 justify-end">
               <button onClick={() => { handleDeleteExperience(confirmDelete); setConfirmDelete(null); }} className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Sí</button>
