@@ -1,10 +1,9 @@
 // src/lib/supabaseClient.js
 import { createClient } from "@supabase/supabase-js";
 
+// Usar las variables de entorno de Vercel
+const supabaseUrl = import.meta.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = 'https://nghugcxwubiwxbjmzhka.supabase.co'
-const supabaseKey = process.env.SUPABASE_KEY
-
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Crear una sola instancia de Supabase
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
