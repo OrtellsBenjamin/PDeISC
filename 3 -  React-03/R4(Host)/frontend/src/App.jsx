@@ -54,7 +54,7 @@ useEffect(() => {
 
       const { data: expData, error: expError } = await supabase
         .from("experience")
-        .select("*")
+        .select("id, role, company, date, description")
         .order("id", { ascending: true });
       if (expError) throw expError;
       setExperienceList(expData || []);
