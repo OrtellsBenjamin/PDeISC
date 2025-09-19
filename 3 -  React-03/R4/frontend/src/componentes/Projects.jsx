@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Projects({
   projectsRef,
@@ -13,6 +14,7 @@ export default function Projects({
   const [isError, setIsError] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
+  // Guardar proyectos en Supabase
   const handleSaveProjects = async () => {
     for (const proj of projectsList) {
       if (!proj.title.trim() || !proj.description.trim() || !proj.image.trim() || !proj.link_code.trim()) {
@@ -24,23 +26,42 @@ export default function Projects({
     }
 
     try {
-      const preparedProjects = projectsList.map((p) => ({
-        ...p,
-        link_code: p.link_code == null ? "#" : p.link_code,
-      }));
-
-      const res = await fetch("http://localhost:3000/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(preparedProjects),
+      const promises = projectsList.map(async (proj) => {
+        if (proj.id) {
+          // actualizar proyecto existente
+          const { error } = await supabase
+            .from("projects")
+            .update({
+              title: proj.title,
+              description: proj.description,
+              image: proj.image,
+              link_code: proj.link_code || "#",
+              tech: proj.tech || [],
+            })
+            .eq("id", proj.id);
+          if (error) throw error;
+        } else {
+          // crear nuevo proyecto
+          const { data, error } = await supabase
+            .from("projects")
+            .insert({
+              title: proj.title,
+              description: proj.description,
+              image: proj.image,
+              link_code: proj.link_code || "#",
+              tech: proj.tech || [],
+            })
+            .select();
+          if (error) throw error;
+          proj.id = data[0].id; // asignamos el id generado
+        }
       });
 
-      if (!res.ok) throw new Error("Error en la respuesta del servidor");
+      await Promise.all(promises);
 
-      const data = await res.json();
-      setProjectsList(data.projects);
+      setProjectsList([...projectsList]);
       setIsError(false);
-      setSuccessMessage(data.message || "¡Proyectos guardados correctamente!");
+      setSuccessMessage("¡Proyectos guardados correctamente!");
       setEditingSection(null);
       setTimeout(() => setSuccessMessage(""), 4000);
     } catch (err) {
@@ -51,19 +72,21 @@ export default function Projects({
     }
   };
 
+  // Agregar proyecto nuevo
   const handleAddProject = () => {
     const newProj = { title: "", description: "", image: "", tech: [], link_code: "#" };
     setProjectsList((prev) => [...prev, newProj]);
   };
 
+  // Eliminar proyecto
   const handleDeleteProject = async (index) => {
     const projToDelete = projectsList[index];
     if (!projToDelete) return;
 
     if (projToDelete.id) {
       try {
-        const res = await fetch(`http://localhost:3000/api/projects/${projToDelete.id}`, { method: "DELETE" });
-        if (!res.ok) throw new Error("Error al eliminar proyecto en backend");
+        const { error } = await supabase.from("projects").delete().eq("id", projToDelete.id);
+        if (error) throw error;
       } catch (err) {
         console.error(err);
         setIsError(true);
@@ -93,7 +116,7 @@ export default function Projects({
                   value={proj.title}
                   onChange={(e) => {
                     const newList = [...projectsList];
-                    newList[i].title = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                    newList[i].title = e.target.value;
                     setProjectsList(newList);
                   }}
                   className="border p-1 rounded"
