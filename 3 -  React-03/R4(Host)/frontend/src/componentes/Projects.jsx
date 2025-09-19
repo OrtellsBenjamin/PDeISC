@@ -17,8 +17,12 @@ export default function Projects({
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const { data, error } = await supabase.from("projects").select("*");
+        const { data, error } = await supabase
+          .from("projects")
+          .select("id, title, description, image, tech, link_code"); // 👈 nada de "*"
+
         if (error) throw error;
+
         const safeData = (data || []).map((proj) => ({
           id: proj.id,
           title: proj.title || "",
@@ -27,6 +31,7 @@ export default function Projects({
           tech: proj.tech || [],
           link_code: proj.link_code || "#",
         }));
+
         setProjectsList(safeData);
       } catch (err) {
         console.error("Error cargando proyectos:", err);
@@ -38,9 +43,16 @@ export default function Projects({
 
   const handleSaveProjects = async () => {
     for (const proj of projectsList) {
-      if (!proj.title.trim() || !proj.description.trim() || !proj.image.trim() || !proj.link_code.trim()) {
+      if (
+        !proj.title.trim() ||
+        !proj.description.trim() ||
+        !proj.image.trim() ||
+        !proj.link_code.trim()
+      ) {
         setIsError(true);
-        setSuccessMessage("Todos los campos deben estar completos antes de guardar");
+        setSuccessMessage(
+          "Todos los campos deben estar completos antes de guardar"
+        );
         setTimeout(() => setSuccessMessage(""), 4000);
         return;
       }
@@ -49,12 +61,34 @@ export default function Projects({
     try {
       const promises = projectsList.map(async (proj) => {
         if (proj.id) {
-          const { error } = await supabase.from("projects").update(proj).eq("id", proj.id);
+          const { error } = await supabase
+            .from("projects")
+            .update({
+              title: proj.title,
+              description: proj.description,
+              image: proj.image,
+              tech: proj.tech,
+              link_code: proj.link_code,
+            })
+            .eq("id", Number(proj.id));
+
           if (error) throw error;
         } else {
-          const { data, error } = await supabase.from("projects").insert([proj]).select();
+          const { data, error } = await supabase
+            .from("projects")
+            .insert([
+              {
+                title: proj.title,
+                description: proj.description,
+                image: proj.image,
+                tech: proj.tech,
+                link_code: proj.link_code,
+              },
+            ])
+            .select();
+
           if (error) throw error;
-          proj.id = data[0].id;
+          proj.id = data[0].id; // guardar el id nuevo
         }
       });
 
@@ -73,7 +107,13 @@ export default function Projects({
   };
 
   const handleAddProject = () => {
-    const newProj = { title: "", description: "", image: "", tech: [], link_code: "#" };
+    const newProj = {
+      title: "",
+      description: "",
+      image: "",
+      tech: [],
+      link_code: "#",
+    };
     setProjectsList((prev) => [...prev, newProj]);
   };
 
@@ -83,12 +123,20 @@ export default function Projects({
 
     try {
       if (projToDelete.id) {
-        const { error } = await supabase.from("projects").delete().eq("id", projToDelete.id);
+        const { data, error } = await supabase
+          .from("projects")
+          .delete()
+          .eq("id", Number(projToDelete.id)) // 👈 forzamos number
+          .select();
+
         if (error) throw error;
+        console.log("Proyecto eliminado de la DB:", data);
       }
+
       const newList = [...projectsList];
       newList.splice(index, 1);
       setProjectsList(newList);
+
       setSuccessMessage("Proyecto eliminado correctamente");
       setIsError(false);
       setTimeout(() => setSuccessMessage(""), 4000);
@@ -101,14 +149,21 @@ export default function Projects({
   };
 
   return (
-    <section id="projects" ref={projectsRef} className="flex flex-col items-center px-6 pt-8 pb-12">
+    <section
+      id="projects"
+      ref={projectsRef}
+      className="flex flex-col items-center px-6 pt-8 pb-12"
+    >
       <div className="max-w-4xl w-full flex flex-col gap-8">
         <h2 className="text-3xl font-bold text-center mb-4">Proyectos</h2>
 
         {editingSection === "projects" ? (
           <div className="space-y-4">
             {projectsList.map((proj, i) => (
-              <div key={proj.id || i} className="flex flex-col gap-2 border p-2 rounded">
+              <div
+                key={proj.id || i}
+                className="flex flex-col gap-2 border p-2 rounded"
+              >
                 <input
                   value={proj.title}
                   onChange={(e) => {
@@ -159,10 +214,16 @@ export default function Projects({
             ))}
 
             <div className="flex gap-2">
-              <button onClick={handleAddProject} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+              <button
+                onClick={handleAddProject}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
                 + Agregar proyecto
               </button>
-              <button onClick={handleSaveProjects} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+              <button
+                onClick={handleSaveProjects}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
                 Guardar
               </button>
             </div>
@@ -199,7 +260,10 @@ export default function Projects({
         )}
 
         {isLogged && editingSection !== "projects" && (
-          <button onClick={() => setEditingSection("projects")} className="mt-6 text-sm text-blue-600 underline">
+          <button
+            onClick={() => setEditingSection("projects")}
+            className="mt-6 text-sm text-blue-600 underline"
+          >
             Editar
           </button>
         )}
@@ -210,9 +274,15 @@ export default function Projects({
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.3 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+            exit={{
+              opacity: 0,
+              scale: 0.5,
+              transition: { duration: 0.2 },
+            }}
             className={`fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-xl z-[9999] font-medium ${
-              isError ? "bg-red-500 text-white border border-red-600" : "bg-green-500 text-white border border-green-600"
+              isError
+                ? "bg-red-500 text-white border border-red-600"
+                : "bg-green-500 text-white border border-green-600"
             }`}
           >
             {successMessage}
@@ -237,7 +307,10 @@ export default function Projects({
               >
                 Sí
               </button>
-              <button onClick={() => setConfirmDelete(null)} className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-800">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-800"
+              >
                 No
               </button>
             </div>
