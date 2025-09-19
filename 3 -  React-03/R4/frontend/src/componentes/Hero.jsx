@@ -1,21 +1,26 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "../lib/supabaseClient";
 
-export default function Hero({
-  heroRef,
-  heroText,
-  setHeroText,
-  editingSection,
-  setEditingSection,
-  isLogged,
-}) {
+export default function Hero({ heroRef, heroText, setHeroText, editingSection, setEditingSection, isLogged }) {
   const [successMessage, setSuccessMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [localText, setLocalText] = useState("");
 
+  // Cargar hero desde Supabase al iniciar
   useEffect(() => {
-    setLocalText(heroText ?? "");
-  }, [heroText]);
+    const fetchHero = async () => {
+      try {
+        const { data, error } = await supabase.from("hero").select("text").single();
+        if (error && error.code !== "PGRST116") throw error; // PGRST116 = no hay filas
+        setLocalText(data?.text || "");
+        setHeroText(data?.text || "");
+      } catch (err) {
+        console.error("Error cargando hero:", err);
+      }
+    };
+    fetchHero();
+  }, [setHeroText]);
 
   const handleChange = (e) => setLocalText(e.target.value);
 
@@ -28,17 +33,22 @@ export default function Hero({
     }
 
     try {
-      const res = await fetch("http://localhost:3000/api/hero", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ heroText: localText }),
-      });
+      // Revisamos si ya existe una fila en la tabla
+      const { data, error } = await supabase.from("hero").select("id").single();
+      if (error && error.code !== "PGRST116") throw error;
 
-      if (!res.ok) throw new Error("Error en el servidor");
+      if (data?.id) {
+        // Actualizamos
+        const { error: updateError } = await supabase.from("hero").update({ text: localText }).eq("id", data.id);
+        if (updateError) throw updateError;
+      } else {
+        // Insertamos nueva fila
+        const { error: insertError } = await supabase.from("hero").insert({ text: localText });
+        if (insertError) throw insertError;
+      }
 
-      const data = await res.json();
       setIsError(false);
-      setSuccessMessage(data.message || "Hero guardado correctamente");
+      setSuccessMessage("Hero guardado correctamente");
       setHeroText(localText);
       setEditingSection(null);
       setTimeout(() => setSuccessMessage(""), 4000);
@@ -51,11 +61,7 @@ export default function Hero({
   };
 
   return (
-    <section
-      id="hero"
-      ref={heroRef}
-      className="h-[75vh] flex items-center px-6 py-12"
-    >
+    <section id="hero" ref={heroRef} className="h-[75vh] flex items-center px-6 py-12">
       <div className="max-w-4xl mx-auto flex flex-col items-start gap-6 md:gap-8 w-full min-h-[250px] justify-center">
         <img
           src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTfKWCwIDhvZ37cbO44lh2drMjplR5pNpqG_Q&s"

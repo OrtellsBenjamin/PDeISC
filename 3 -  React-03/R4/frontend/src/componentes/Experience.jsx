@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Briefcase } from "lucide-react";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Experience({ experienceRef, editingSection, setEditingSection, isLogged }) {
   const [experienceList, setExperienceList] = useState([]);
@@ -8,11 +9,12 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
   const [isError, setIsError] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
+  // Cargar experiencias desde Supabase
   useEffect(() => {
     const fetchExperience = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/experience");
-        const data = await res.json();
+        const { data, error } = await supabase.from("experience").select("*").order("date", { ascending: false });
+        if (error) throw error;
         setExperienceList(data);
       } catch (err) {
         console.error("Error cargando experiencias:", err);
@@ -31,13 +33,7 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
   };
 
   const handleAddExperience = () => {
-    const newExp = {
-      role: "",
-      company: "",
-      date: "",
-      description: "",
-      link: ""
-    };
+    const newExp = { role: "", company: "", date: "", description: "", link: "" };
     setExperienceList((prev) => [...prev, newExp]);
   };
 
@@ -47,10 +43,8 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
 
     if (expToDelete.id) {
       try {
-        const res = await fetch(`http://localhost:3000/api/experience/${expToDelete.id}`, {
-          method: "DELETE",
-        });
-        if (!res.ok) throw new Error("Error al eliminar experiencia en backend");
+        const { error } = await supabase.from("experience").delete().eq("id", expToDelete.id);
+        if (error) throw error;
       } catch (err) {
         console.error(err);
         setIsError(true);
@@ -78,22 +72,20 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
     }
 
     try {
-      const promises = experienceList.map((exp) =>
-        exp.id
-          ? fetch(`http://localhost:3000/api/experience/${exp.id}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(exp),
-            }).then((res) => res.json())
-          : fetch(`http://localhost:3000/api/experience`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(exp),
-            }).then((res) => res.json())
-      );
+      const promises = experienceList.map(async (exp) => {
+        if (exp.id) {
+          const { error } = await supabase.from("experience").update(exp).eq("id", exp.id);
+          if (error) throw error;
+        } else {
+          const { data, error } = await supabase.from("experience").insert(exp).select();
+          if (error) throw error;
+          exp.id = data[0].id;
+        }
+      });
 
-      const updatedList = await Promise.all(promises);
-      setExperienceList(updatedList);
+      await Promise.all(promises);
+
+      setExperienceList([...experienceList]);
       setEditingSection(null);
       setSuccessMessage("Experiencias guardadas correctamente");
       setIsError(false);
@@ -127,24 +119,9 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
                 <div className="md:w-1/3">
                   {editingSection === "experience" ? (
                     <>
-                      <input
-                        value={exp.role}
-                        onChange={(e) => handleChange(i, "role", e.target.value)}
-                        placeholder="Cargo"
-                        className="border p-1 w-full mb-1 rounded"
-                      />
-                      <input
-                        value={exp.company}
-                        onChange={(e) => handleChange(i, "company", e.target.value)}
-                        placeholder="Empresa"
-                        className="border p-1 w-full mb-1 rounded"
-                      />
-                      <input
-                        value={exp.date}
-                        onChange={(e) => handleChange(i, "date", e.target.value)}
-                        placeholder="Fecha"
-                        className="border p-1 w-full mb-1 rounded"
-                      />
+                      <input value={exp.role} onChange={(e) => handleChange(i, "role", e.target.value)} placeholder="Cargo" className="border p-1 w-full mb-1 rounded" />
+                      <input value={exp.company} onChange={(e) => handleChange(i, "company", e.target.value)} placeholder="Empresa" className="border p-1 w-full mb-1 rounded" />
+                      <input value={exp.date} onChange={(e) => handleChange(i, "date", e.target.value)} placeholder="Fecha" className="border p-1 w-full mb-1 rounded" />
                     </>
                   ) : (
                     <>
@@ -157,27 +134,13 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
 
                 <div className="md:flex-1 mt-2 md:mt-0">
                   {editingSection === "experience" ? (
-                    <textarea
-                      value={exp.description}
-                      onChange={(e) => handleChange(i, "description", e.target.value)}
-                      placeholder="Descripción"
-                      className="border p-2 w-full rounded"
-                    />
+                    <textarea value={exp.description} onChange={(e) => handleChange(i, "description", e.target.value)} placeholder="Descripción" className="border p-2 w-full rounded" />
                   ) : (
                     <p className="text-gray-700">{exp.description}</p>
                   )}
-                  {exp.link && !editingSection && (
-                    <a href={exp.link} className="text-blue-600 font-medium mt-1 inline-block">
-                      Saber más &gt;
-                    </a>
-                  )}
+                  {exp.link && !editingSection && <a href={exp.link} className="text-blue-600 font-medium mt-1 inline-block">Saber más &gt;</a>}
                   {editingSection && (
-                    <button
-                      onClick={() => setConfirmDelete(i)}
-                      className="mt-2 px-4 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                    >
-                      Eliminar
-                    </button>
+                    <button onClick={() => setConfirmDelete(i)} className="mt-2 px-4 py-1 bg-red-500 text-white rounded hover:bg-red-600">Eliminar</button>
                   )}
                 </div>
               </div>
@@ -187,75 +150,30 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
 
         {editingSection === "experience" && isLogged && (
           <div className="flex gap-2 mt-4">
-            <button
-              onClick={handleAddExperience}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              + Agregar experiencia
-            </button>
-            <button
-              onClick={handleSaveExperience}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-            >
-              Guardar
-            </button>
-            <button
-              onClick={() => setEditingSection(null)}
-              className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
-            >
-              Cancelar
-            </button>
+            <button onClick={handleAddExperience} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">+ Agregar experiencia</button>
+            <button onClick={handleSaveExperience} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Guardar</button>
+            <button onClick={() => setEditingSection(null)} className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancelar</button>
           </div>
         )}
 
         {isLogged && editingSection !== "experience" && (
-          <button
-            onClick={() => setEditingSection("experience")}
-            className="mt-4 text-sm text-blue-600 underline"
-          >
-            Editar
-          </button>
+          <button onClick={() => setEditingSection("experience")} className="mt-4 text-sm text-blue-600 underline">Editar</button>
         )}
       </div>
 
       <AnimatePresence>
         {successMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.3 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
-            className={`fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-xl z-[9999] font-medium ${
-              isError ? "bg-red-500 text-white" : "bg-green-500 text-white"
-            }`}
-          >
+          <motion.div initial={{ opacity: 0, y: 50, scale: 0.3 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }} className={`fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-xl z-[9999] font-medium ${isError ? "bg-red-500 text-white" : "bg-green-500 text-white"}`}>
             {successMessage}
           </motion.div>
         )}
 
         {confirmDelete !== null && (
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.3 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
-            className="fixed bottom-6 right-6 px-6 py-4 rounded-lg shadow-xl z-[9999] bg-yellow-400 text-black font-medium flex flex-col gap-2"
-          >
+          <motion.div initial={{ opacity: 0, y: 50, scale: 0.3 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }} className="fixed bottom-6 right-6 px-6 py-4 rounded-lg shadow-xl z-[9999] bg-yellow-400 text-black font-medium flex flex-col gap-2">
             <span>¿Seguro que quiere eliminar esta experiencia?</span>
             <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => {
-                  handleDeleteExperience(confirmDelete);
-                  setConfirmDelete(null);
-                }}
-                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-              >
-                Sí
-              </button>
-              <button
-                onClick={() => setConfirmDelete(null)}
-                className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-800"
-              >
-                No
-              </button>
+              <button onClick={() => { handleDeleteExperience(confirmDelete); setConfirmDelete(null); }} className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Sí</button>
+              <button onClick={() => setConfirmDelete(null)} className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-800">No</button>
             </div>
           </motion.div>
         )}
