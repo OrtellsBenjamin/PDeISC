@@ -1,11 +1,19 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-export default function About({ aboutRef, aboutText, setAboutText, editingSection, setEditingSection, isLogged }) {
+export default function About({
+  aboutRef,
+  aboutText,
+  setAboutText,
+  editingSection,
+  setEditingSection,
+  isLogged,
+}) {
   const [localText, setLocalText] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isError, setIsError] = useState(false);
 
+  // Fetch inicial de About
   useEffect(() => {
     const fetchAbout = async () => {
       try {
@@ -13,6 +21,7 @@ export default function About({ aboutRef, aboutText, setAboutText, editingSectio
           .from("about")
           .select("id, aboutText, updated_at")
           .limit(1);
+
         if (error && error.code !== "PGRST116") throw error;
 
         const aboutData = data?.[0] || { aboutText: "" };
@@ -22,9 +31,11 @@ export default function About({ aboutRef, aboutText, setAboutText, editingSectio
         console.error("Error cargando About:", err);
       }
     };
+
     fetchAbout();
   }, [setAboutText]);
 
+  // Guardar About (insert/update)
   const handleSaveAbout = async () => {
     if (!localText.trim()) {
       setIsError(true);
@@ -34,20 +45,25 @@ export default function About({ aboutRef, aboutText, setAboutText, editingSectio
     }
 
     try {
+      // Verificamos si ya existe un registro
       const { data, error } = await supabase
         .from("about")
         .select("id")
         .limit(1);
-      if (error) throw error;
+
+      if (error && error.code !== "PGRST116") throw error;
 
       const aboutData = data?.[0];
+
       if (aboutData?.id) {
+        // Actualizamos
         const { error: updateError } = await supabase
           .from("about")
           .update({ aboutText: localText })
           .eq("id", aboutData.id);
         if (updateError) throw updateError;
       } else {
+        // Insertamos nuevo registro
         const { error: insertError } = await supabase
           .from("about")
           .insert({ aboutText: localText });

@@ -2,10 +2,18 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabaseClient";
 
-export default function Hero({ heroRef, heroText, setHeroText, editingSection, setEditingSection, isLogged }) {
+export default function Hero({
+  heroRef,
+  heroText,
+  setHeroText,
+  editingSection,
+  setEditingSection,
+  isLogged,
+}) {
   const [localText, setLocalText] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isError, setIsError] = useState(false);
+
 
   useEffect(() => {
     const fetchHero = async () => {
@@ -15,6 +23,7 @@ export default function Hero({ heroRef, heroText, setHeroText, editingSection, s
           .select("id, heroText, subText, updated_at")
           .single();
 
+        // PGRST116 = no hay registros
         if (error && error.code !== "PGRST116") throw error;
 
         setLocalText(data?.heroText || "");
@@ -23,9 +32,11 @@ export default function Hero({ heroRef, heroText, setHeroText, editingSection, s
         console.error("Error cargando hero:", err);
       }
     };
+
     fetchHero();
   }, [setHeroText]);
 
+  // Guardar Hero (insert/update)
   const handleSaveHero = async () => {
     if (!localText.trim()) {
       setIsError(true);
@@ -35,16 +46,23 @@ export default function Hero({ heroRef, heroText, setHeroText, editingSection, s
     }
 
     try {
-      const { data, error } = await supabase.from("hero").select("id").single();
+      // Verificamos si ya existe un registro
+      const { data: existingHero, error } = await supabase
+        .from("hero")
+        .select("id")
+        .single();
+
       if (error && error.code !== "PGRST116") throw error;
 
-      if (data?.id) {
+      if (existingHero?.id) {
+        // Actualizamos
         const { error: updateError } = await supabase
           .from("hero")
           .update({ heroText: localText })
-          .eq("id", data.id);
+          .eq("id", existingHero.id);
         if (updateError) throw updateError;
       } else {
+        // Insertamos nuevo registro
         const { error: insertError } = await supabase
           .from("hero")
           .insert({ heroText: localText });

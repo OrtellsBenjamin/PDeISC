@@ -9,7 +9,7 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
   const [isError, setIsError] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  // Cargar experiencias desde Supabase
+  // Cargar experiencias
   useEffect(() => {
     const fetchExperience = async () => {
       try {
@@ -19,12 +19,7 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
           .order("date", { ascending: false });
         if (error && error.code !== "PGRST116") throw error;
 
-        const formattedData = data.map((exp) => ({
-          ...exp,
-          link: exp.link || "",
-        }));
-
-        setExperienceList(formattedData);
+        setExperienceList((data || []).map((exp) => ({ ...exp, link: exp.link || "" })));
       } catch (err) {
         console.error("Error cargando experiencias:", err);
       }
@@ -32,6 +27,7 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
     fetchExperience();
   }, []);
 
+  // Cambios en los campos
   const handleChange = (i, field, value) => {
     const newList = [...experienceList];
     if (field === "role" || field === "company") {
@@ -41,11 +37,13 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
     setExperienceList(newList);
   };
 
+  // Agregar experiencia
   const handleAddExperience = () => {
     const newExp = { role: "", company: "", date: "", description: "", link: "" };
     setExperienceList((prev) => [...prev, newExp]);
   };
 
+  // Eliminar experiencia
   const handleDeleteExperience = async (index) => {
     const expToDelete = experienceList[index];
     if (!expToDelete) return;
@@ -70,6 +68,7 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
     setTimeout(() => setSuccessMessage(""), 4000);
   };
 
+  // Guardar experiencias
   const handleSaveExperience = async () => {
     for (const exp of experienceList) {
       if (!exp.role.trim() || !exp.company.trim() || !exp.date.trim()) {
@@ -106,7 +105,6 @@ export default function Experience({ experienceRef, editingSection, setEditingSe
       setTimeout(() => setSuccessMessage(""), 4000);
     }
   };
-
   return (
     <section id="experience" ref={experienceRef} className="h-auto py-16 px-6">
       <div className="max-w-4xl mx-auto">
