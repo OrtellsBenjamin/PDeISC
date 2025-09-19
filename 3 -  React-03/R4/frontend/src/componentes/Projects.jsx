@@ -2,10 +2,16 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabaseClient";
 
-export default function Projects({ projectsRef, projectsList, setProjectsList, editingSection, setEditingSection, isLogged }) {
+export default function Projects({
+  projectsRef,
+  projectsList,
+  setProjectsList,
+  editingSection,
+  setEditingSection,
+  isLogged,
+}) {
   const [successMessage, setSuccessMessage] = useState("");
   const [isError, setIsError] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(null);
 
   // Cargar proyectos desde Supabase
   useEffect(() => {
@@ -15,9 +21,10 @@ export default function Projects({ projectsRef, projectsList, setProjectsList, e
           .from("projects")
           .select("id, title, description, image, tech, link_code")
           .order("id", { ascending: true });
+
         if (error && error.code !== "PGRST116") throw error;
 
-        const safeData = data.map((proj) => ({
+        const safeData = (data || []).map((proj) => ({
           id: proj.id,
           title: proj.title || "",
           description: proj.description || "",
@@ -35,6 +42,7 @@ export default function Projects({ projectsRef, projectsList, setProjectsList, e
     fetchProjects();
   }, [setProjectsList]);
 
+  // Guardar todos los proyectos
   const handleSaveProjects = async () => {
     for (const proj of projectsList) {
       if (!proj.title.trim() || !proj.description.trim() || !proj.image.trim() || !proj.link_code.trim()) {
@@ -90,11 +98,13 @@ export default function Projects({ projectsRef, projectsList, setProjectsList, e
     }
   };
 
+  // Agregar un nuevo proyecto
   const handleAddProject = () => {
     const newProj = { title: "", description: "", image: "", tech: [], link_code: "#" };
     setProjectsList((prev) => [...prev, newProj]);
   };
 
+  // Eliminar proyecto
   const handleDeleteProject = async (index) => {
     const projToDelete = projectsList[index];
     if (!projToDelete) return;
