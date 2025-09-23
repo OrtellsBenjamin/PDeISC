@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "../lib/supabaseClient"; // 👈 importa tu cliente
+import { supabase } from "../lib/supabaseClient";
 
 export default function Projects({
   projectsRef,
@@ -14,11 +14,14 @@ export default function Projects({
   const [isError, setIsError] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  // Cargar proyectos desde Supabase
+  // ✅ Cargar proyectos al inicio
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const { data, error } = await supabase.from("projects").select("*");
+        const { data, error } = await supabase
+          .from("projects")
+          .select("id, title, description, image, tech, link_code")
+          .order("id", { ascending: true });
         if (error) throw error;
 
         const safeData = (data || []).map((proj) => ({
@@ -39,26 +42,26 @@ export default function Projects({
     fetchProjects();
   }, [setProjectsList]);
 
-  // Guardar todos los proyectos en Supabase
+  // ✅ Guardar proyectos (update o insert)
   const handleSaveProjects = async () => {
-    for (const proj of projectsList) {
-      if (
-        !proj.title.trim() ||
-        !proj.description.trim() ||
-        !proj.image.trim() ||
-        !proj.link_code.trim()
-      ) {
-        setIsError(true);
-        setSuccessMessage("Todos los campos deben estar completos antes de guardar");
-        setTimeout(() => setSuccessMessage(""), 4000);
-        return;
-      }
-    }
-
     try {
-      const promises = projectsList.map(async (proj) => {
+      const newProjectsList = [];
+
+      for (const proj of projectsList) {
+        if (
+          !proj.title.trim() ||
+          !proj.description.trim() ||
+          !proj.image.trim() ||
+          !proj.link_code.trim()
+        ) {
+          setIsError(true);
+          setSuccessMessage("Todos los campos deben estar completos");
+          setTimeout(() => setSuccessMessage(""), 4000);
+          return;
+        }
+
         if (proj.id) {
-          // actualizar
+          // Update
           const { error } = await supabase
             .from("projects")
             .update({
@@ -71,8 +74,9 @@ export default function Projects({
             .eq("id", proj.id);
 
           if (error) throw error;
+          newProjectsList.push(proj);
         } else {
-          // insertar
+          // Insert
           const { data, error } = await supabase
             .from("projects")
             .insert([
@@ -84,29 +88,27 @@ export default function Projects({
                 link_code: proj.link_code,
               },
             ])
-            .select();
+            .select("id, title, description, image, tech, link_code");
 
           if (error) throw error;
-          proj.id = data[0].id; // 👈 actualizar id en la lista
+          newProjectsList.push({ ...proj, id: data[0].id });
         }
-      });
+      }
 
-      await Promise.all(promises);
-
-      setProjectsList([...projectsList]);
+      setProjectsList(newProjectsList);
       setIsError(false);
       setSuccessMessage("¡Proyectos guardados correctamente!");
       setEditingSection(null);
       setTimeout(() => setSuccessMessage(""), 4000);
     } catch (err) {
-      console.error(err);
+      console.error("Error guardando proyectos:", err);
       setIsError(true);
       setSuccessMessage("Error al guardar los proyectos");
       setTimeout(() => setSuccessMessage(""), 4000);
     }
   };
 
-  // Agregar un nuevo proyecto
+  // ✅ Agregar nuevo proyecto
   const handleAddProject = () => {
     const newProj = {
       title: "",
@@ -118,7 +120,7 @@ export default function Projects({
     setProjectsList((prev) => [...prev, newProj]);
   };
 
-  // Eliminar proyecto en Supabase
+  // ✅ Eliminar proyecto
   const handleDeleteProject = async (index) => {
     const projToDelete = projectsList[index];
     if (!projToDelete) return;
@@ -128,8 +130,7 @@ export default function Projects({
         const { error } = await supabase
           .from("projects")
           .delete()
-          .eq("id", Number(projToDelete.id))
-          .select();
+          .eq("id", projToDelete.id);
 
         if (error) throw error;
       }
@@ -142,7 +143,7 @@ export default function Projects({
       setIsError(false);
       setTimeout(() => setSuccessMessage(""), 4000);
     } catch (err) {
-      console.error(err);
+      console.error("Error eliminando proyecto:", err);
       setIsError(true);
       setSuccessMessage("Error al eliminar proyecto");
       setTimeout(() => setSuccessMessage(""), 4000);
@@ -161,7 +162,10 @@ export default function Projects({
         {editingSection === "projects" ? (
           <div className="space-y-4">
             {projectsList.map((proj, i) => (
-              <div key={proj.id || i} className="flex flex-col gap-2 border p-2 rounded">
+              <div
+                key={proj.id || i}
+                className="flex flex-col gap-2 border p-2 rounded"
+              >
                 <input
                   value={proj.title}
                   onChange={(e) => {
@@ -224,12 +228,21 @@ export default function Projects({
               >
                 Guardar
               </button>
+              <button
+                onClick={() => setEditingSection(null)}
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              >
+                Cancelar
+              </button>
             </div>
           </div>
         ) : (
           <div className="flex flex-col gap-8">
             {projectsList.map((proj) => (
-              <motion.div key={proj.id} className="flex flex-col md:flex-row gap-6">
+              <motion.div
+                key={proj.id}
+                className="flex flex-col md:flex-row gap-6"
+              >
                 <motion.img
                   whileHover={{ scale: 1.04 }}
                   src={proj.image}
