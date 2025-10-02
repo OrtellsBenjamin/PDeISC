@@ -18,7 +18,7 @@ export default function Experience({
   useEffect(() => {
     const fetchExperience = async () => {
       try {
-        // Especificar las columnas existentes evita errores de caché
+   
         const { data, error } = await supabase
           .from("experience")
           .select("id, role, company, date, description")
@@ -43,7 +43,7 @@ export default function Experience({
 
   const handleAddExperience = () => {
     const newExp = { role: "", company: "", date: "", description: "" };
-    setExperienceList((prev) => [ newExp, ...prev]);
+    setExperienceList((prev) => [...prev, newExp]);
   };
 
   const handleDeleteExperience = async (index) => {
