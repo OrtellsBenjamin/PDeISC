@@ -14,7 +14,6 @@ export default function Projects({
   const [isError, setIsError] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  // ✅ Cargar proyectos al inicio
   useEffect(() => {
     const fetchProjects = async () => {
       try {

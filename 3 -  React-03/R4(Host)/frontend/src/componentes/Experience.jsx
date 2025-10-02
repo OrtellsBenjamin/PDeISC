@@ -43,7 +43,7 @@ export default function Experience({
 
   const handleAddExperience = () => {
     const newExp = { role: "", company: "", date: "", description: "" };
-    setExperienceList((prev) => [...prev, newExp]);
+    setExperienceList((prev) => [ newExp, ...prev]);
   };
 
   const handleDeleteExperience = async (index) => {
