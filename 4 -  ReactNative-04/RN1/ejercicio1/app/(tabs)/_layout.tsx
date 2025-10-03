@@ -25,7 +25,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="holamundo"
         options={{
-          title: 'Hola mundo',
+          title: 'Mascota',
         }}
       />
 
