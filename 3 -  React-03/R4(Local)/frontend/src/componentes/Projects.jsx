@@ -233,7 +233,7 @@ export default function Projects({
             initial={{ opacity: 0, y: 50, scale: 0.3 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
-            className="fixed bottom-6 right-6 px-6 py-4 rounded-lg shadow-xl z-[9999] bg-yellow-400 text-black font-medium flex flex-col gap-2"
+            className="fixed bottom-6 right-6 px-6 py-4 rounded-lg shadow-xl z-[9999] bg-blue-600 text-white font-medium flex flex-col gap-2"
           >
             <span>¿Seguro que quiere eliminar este proyecto?</span>
             <div className="flex gap-2 justify-end">

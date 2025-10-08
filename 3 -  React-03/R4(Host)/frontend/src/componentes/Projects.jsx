@@ -41,7 +41,7 @@ export default function Projects({
     fetchProjects();
   }, [setProjectsList]);
 
-  // ✅ Guardar proyectos (update o insert)
+
   const handleSaveProjects = async () => {
     try {
       const newProjectsList = [];
@@ -60,7 +60,7 @@ export default function Projects({
         }
 
         if (proj.id) {
-          // Update
+     
           const { error } = await supabase
             .from("projects")
             .update({
@@ -75,7 +75,7 @@ export default function Projects({
           if (error) throw error;
           newProjectsList.push(proj);
         } else {
-          // Insert
+    
           const { data, error } = await supabase
             .from("projects")
             .insert([
@@ -107,7 +107,7 @@ export default function Projects({
     }
   };
 
-  // ✅ Agregar nuevo proyecto
+
   const handleAddProject = () => {
     const newProj = {
       title: "",
@@ -119,7 +119,7 @@ export default function Projects({
     setProjectsList((prev) => [...prev, newProj]);
   };
 
-  // ✅ Eliminar proyecto
+
   const handleDeleteProject = async (index) => {
     const projToDelete = projectsList[index];
     if (!projToDelete) return;
@@ -227,12 +227,7 @@ export default function Projects({
               >
                 Guardar
               </button>
-              <button
-                onClick={() => setEditingSection(null)}
-                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-              >
-                Cancelar
-              </button>
+    
             </div>
           </div>
         ) : (
@@ -300,7 +295,7 @@ export default function Projects({
             initial={{ opacity: 0, y: 50, scale: 0.3 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
-            className="fixed bottom-6 right-6 px-6 py-4 rounded-lg shadow-xl z-[9999] bg-yellow-400 text-black font-medium flex flex-col gap-2"
+            className="fixed bottom-6 right-6 px-6 py-4 rounded-lg shadow-xl z-[9999] bg-blue-600 text-white font-medium flex flex-col gap-2"
           >
             <span>¿Seguro que quiere eliminar este proyecto?</span>
             <div className="flex gap-2 justify-end">

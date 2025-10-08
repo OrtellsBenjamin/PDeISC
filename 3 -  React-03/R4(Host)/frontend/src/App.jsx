@@ -2,11 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Github, Linkedin } from "lucide-react";
 
+import Navbar from "./componentes/Navbar"; 
 import Hero from "./componentes/Hero";
 import About from "./componentes/About";
 import Experience from "./componentes/Experience";
 import Projects from "./componentes/Projects";
-import Navbar from "./componentes/Navbar";
+
 import LoginModal from "./componentes/LoginModal";
 import { supabase } from "./lib/supabaseClient";
 
@@ -31,46 +32,42 @@ export default function App() {
   const [loginMessage, setLoginMessage] = useState("");
   const [loginError, setLoginError] = useState(false);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: heroData, error: heroError } = await supabase
+          .from("hero")
+          .select("heroTitle, heroText")
+          .single();
+        if (heroError) throw heroError;
+        setHeroTitle(heroData?.heroTitle || "");
+        setHeroText(heroData?.heroText || "");
 
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      
-      const { data: heroData, error: heroError } = await supabase
-        .from("hero")
-        .select("heroTitle, heroText")
-        .single();
-      if (heroError) throw heroError;
-      setHeroTitle(heroData?.heroTitle || "");
-      setHeroText(heroData?.heroText || "");
+        const { data: aboutData, error: aboutError } = await supabase
+          .from("about")
+          .select("aboutText")
+          .single();
+        if (aboutError) throw aboutError;
+        setAboutText(aboutData?.aboutText || "");
 
-      const { data: aboutData, error: aboutError } = await supabase
-        .from("about")
-        .select("aboutText")
-        .single();
-      if (aboutError) throw aboutError;
-      setAboutText(aboutData?.aboutText || "");
+        const { data: expData, error: expError } = await supabase
+          .from("experience")
+          .select("id, role, company, date, description")
+          .order("id", { ascending: true });
+        if (expError) throw expError;
+        setExperienceList(expData || []);
 
-
-      const { data: expData, error: expError } = await supabase
-        .from("experience")
-        .select("id, role, company, date, description")
-        .order("id", { ascending: true });
-      if (expError) throw expError;
-      setExperienceList(expData || []);
-
-      const { data: projData, error: projError } = await supabase
-        .from("projects")
-        .select("*");
-      if (projError) throw projError;
-      setProjectsList(projData || []);
-    } catch (err) {
-      console.error("Error cargando datos iniciales:", err.message);
-    }
-  };
-  fetchData();
-}, []);
-
+        const { data: projData, error: projError } = await supabase
+          .from("projects")
+          .select("*");
+        if (projError) throw projError;
+        setProjectsList(projData || []);
+      } catch (err) {
+        console.error("Error cargando datos iniciales:", err.message);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleScrollTo = (id) => {
     let ref = null;
@@ -78,7 +75,11 @@ useEffect(() => {
     if (id === "sobreMi") ref = aboutRef.current;
     if (id === "experience") ref = experienceRef.current;
     if (id === "projects") ref = projectsRef.current;
-    if (ref) ref.scrollIntoView({ behavior: "smooth" });
+    if (ref) {
+      const yOffset = -64; 
+      const y = ref.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
     setActiveSection(id);
   };
 
@@ -113,15 +114,13 @@ useEffect(() => {
   return (
     <div className="font-sans relative min-h-screen flex flex-col">
       <Navbar
-        active={activeSection}
-        handleScrollTo={handleScrollTo}
         isLogged={isLogged}
-        setShowLogin={setShowLogin}
         setIsLogged={setIsLogged}
+        onLoginClick={() => setShowLogin(true)}
       />
 
-      <main className="relative flex-1">
-     
+      <main className="relative flex-1 mt-16">
+
         <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]"></div>
 
         <Hero
@@ -163,6 +162,7 @@ useEffect(() => {
         />
       </main>
 
+
       {showLogin && (
         <LoginModal
           loginData={loginData}
@@ -172,6 +172,7 @@ useEffect(() => {
         />
       )}
 
+   
       <AnimatePresence>
         {loginMessage && (
           <motion.div
@@ -179,7 +180,9 @@ useEffect(() => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
             className={`fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-xl z-[9999] font-medium ${
-              loginError ? "bg-red-500 text-white border border-red-600" : "bg-green-500 text-white border border-green-600"
+              loginError
+                ? "bg-red-500 text-white border border-red-600"
+                : "bg-green-500 text-white border border-green-600"
             }`}
           >
             {loginMessage}
