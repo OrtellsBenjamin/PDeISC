@@ -1,56 +1,110 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  useWindowDimensions,
+} from "react-native";
 import { RouteProp, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/AppNavigator";
-import { useFonts, Montserrat_400Regular, Montserrat_700Bold } from '@expo-google-fonts/montserrat';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 type WelcomeScreenRouteProp = RouteProp<RootStackParamList, "Welcome">;
-type WelcomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, "Welcome">;
+type WelcomeScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "Welcome"
+>;
 
 type Props = { route: WelcomeScreenRouteProp };
 
 export default function WelcomeScreen({ route }: Props) {
   const { user } = route.params;
   const navigation = useNavigation<WelcomeScreenNavigationProp>();
+  const { width } = useWindowDimensions();
 
-  const [fontsLoaded] = useFonts({
-    Montserrat_400Regular,
-    Montserrat_700Bold,
-  });
 
-  
+  const containerWidth = width > 450 ? 550 : "90%";
 
   const handleLogout = () => {
-    navigation.replace("Login"); 
+    navigation.replace("Login");
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Bienvenido, {user.username}!</Text>
-      <Text style={styles.subtitle}>¡Has ingresado correctamente al sistema!</Text>
+    <ScrollView
+      contentContainerStyle={{
+        flexGrow: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+      }}
+    >
+      <View
+        style={{
+          position: "relative",
+          width: containerWidth,
+          alignSelf: "center",
+        }}
+      >
 
-      <TouchableOpacity style={styles.button} onPress={handleLogout}>
-        <Text style={styles.buttonText}>Cerrar sesión</Text>
-      </TouchableOpacity>
+        <View
+          style={{
+            position: "absolute",
+            top: 10,
+            left: 10,
+            right: -6,
+            bottom: -6,
+            backgroundColor: "black",
+            borderRadius: 8,
+            zIndex: -1,
+          }}
+        />
+
+        <View
+          style={{
+            backgroundColor: "#fff",
+            padding: 20,
+            borderRadius: 8,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 24,
+              marginBottom: 10,
+              textAlign: "center",
+              fontWeight: "600",
+            }}
+          >
+            Bienvenido, {user.username}!
+          </Text>
+
+          <Text
+            style={{
+              fontSize: 16,
+              marginBottom: 30,
+              textAlign: "center",
+              color: "#333",
+            }}
+          >
+            ¡Has ingresado correctamente al sistema!
+          </Text>
+
+          <TouchableOpacity
+            onPress={handleLogout}
+            style={{
+              backgroundColor: "#FD5D5E", 
+              paddingVertical: 12,
+              paddingHorizontal: 25,
+              alignItems: "center",
+              borderRadius: 5,
+            }}
+          >
+            <Text style={{ color: "#fff", fontWeight: "600" }}>
+              Cerrar sesión
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flexGrow: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#111", padding: 20 },
-  title: { fontSize: 24, fontFamily: "Montserrat_700Bold", color: "#fff", marginBottom: 10, textAlign: "center" },
-  subtitle: { fontSize: 16, fontFamily: "Montserrat_400Regular", color: "#ccc", textAlign: "center", marginBottom: 30 },
-  button: {
-    backgroundColor: "#6200ee",
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontFamily: "Montserrat_700Bold",
-  },
-});
