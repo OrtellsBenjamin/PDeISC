@@ -71,10 +71,14 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
   const [phone, setPhone] = useState(userInfo?.phone || "");
   const [location, setLocation] = useState(userInfo?.location || null);
   const [document, setDocument] = useState(userInfo?.document || null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [stream, setStream] = useState(null);
 
   const originalRef = useRef({ name, phone, photo, location, document });
   const imageInputRef = useRef(null);
   const documentInputRef = useRef(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
   const { width } = useWindowDimensions();
   const { height: screenHeight } = Dimensions.get("window");
   const isTabletOrPc = width >= 768;
@@ -132,14 +136,58 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
     });
   };
 
-  const handleRemoveDocument = () => {
-    setDocument(null);
-    Toast.show({
-      type: "info",
-      text1: "Documento eliminado",
-      position: "top",
-      visibilityTime: 1500,
-    });
+  // ===========================
+  //   CÁMARA (WEB)
+  // ===========================
+  const openCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+      });
+      setStream(mediaStream);
+      setShowCamera(true);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+        }
+      }, 100);
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "No se pudo acceder a la cámara",
+        text2: "Verifica los permisos del navegador",
+        position: "top",
+        visibilityTime: 1500,
+      });
+    }
+  };
+
+  const capturePhoto = () => {
+    if (canvasRef.current && videoRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0);
+      const photoData = canvas.toDataURL("image/png");
+      setPhoto(photoData);
+      closeCamera();
+      Toast.show({
+        type: "success",
+        text1: "Foto capturada",
+        position: "top",
+        visibilityTime: 1500,
+      });
+    }
+  };
+
+  const closeCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+    setShowCamera(false);
   };
 
   const handleGetLocation = async () => {
@@ -196,8 +244,29 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
     }
   };
 
+  const isValidPhone = (num) => /^[0-9]{7,15}$/.test(num);
+
   const handleSave = () => {
-    const updatedProfile = { ...userInfo, name, email, phone, photo, location, document };
+    if (!isValidPhone(phone)) {
+      Toast.show({
+        type: "error",
+        text1: "Número inválido",
+        text2: "Debe contener solo números y tener entre 7 y 15 dígitos.",
+        position: "top",
+        visibilityTime: 1500,
+      });
+      return;
+    }
+
+    const updatedProfile = {
+      ...userInfo,
+      name,
+      email,
+      phone,
+      photo,
+      location,
+      document,
+    };
     setUserInfo(updatedProfile);
     originalRef.current = { name, phone, photo, location, document };
     setEditing(false);
@@ -229,7 +298,9 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
 
   return (
     <View style={styles.rootContainer}>
-      <ScrollView contentContainerStyle={[styles.container, { minHeight: screenHeight }]}>
+      <ScrollView
+        contentContainerStyle={[styles.container, { minHeight: screenHeight }]}
+      >
         <View style={styles.cardShadow} />
         <View style={styles.card}>
           <Text style={styles.title}>Mi Perfil</Text>
@@ -269,7 +340,8 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
               <Text style={styles.label}>Ubicación</Text>
               {location ? (
                 <Text style={styles.text}>
-                  Lat: {location.latitude?.toFixed(4)} | Lng: {location.longitude?.toFixed(4)}
+                  Lat: {location.latitude?.toFixed(4)} | Lng:{" "}
+                  {location.longitude?.toFixed(4)}
                 </Text>
               ) : (
                 <Text style={styles.text}>Sin ubicación</Text>
@@ -277,7 +349,9 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
 
               <Text style={styles.label}>Documento</Text>
               {document ? (
-                <Text style={styles.text}>{document.name || "Documento cargado"}</Text>
+                <Text style={styles.text}>
+                  {document.name || "Documento cargado"}
+                </Text>
               ) : (
                 <Text style={styles.text}>Ningún documento cargado</Text>
               )}
@@ -296,6 +370,10 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
                 <Text style={styles.btnLabel}>Cambiar foto</Text>
               </ButtonWithShadow>
 
+              <ButtonWithShadow half={isTabletOrPc} onPress={openCamera}>
+                <Text style={styles.btnLabel}>Tomar foto</Text>
+              </ButtonWithShadow>
+
               <Text style={styles.label}>Nombre</Text>
               <TextInput style={styles.input} value={name} onChangeText={setName} />
 
@@ -303,15 +381,19 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
               <TextInput
                 style={styles.input}
                 value={phone}
-                onChangeText={setPhone}
+                onChangeText={(text) => {
+                  const numericText = text.replace(/[^0-9]/g, "");
+                  setPhone(numericText);
+                }}
                 keyboardType="phone-pad"
-                placeholder="Ej: +54 9 11 1234 5678"
+                placeholder="Ej: 1134567890"
               />
 
               <Text style={styles.label}>Ubicación</Text>
               {location ? (
                 <Text style={styles.text}>
-                  Lat: {location.latitude?.toFixed(4)} | Lng: {location.longitude?.toFixed(4)}
+                  Lat: {location.latitude?.toFixed(4)} | Lng:{" "}
+                  {location.longitude?.toFixed(4)}
                 </Text>
               ) : (
                 <Text style={styles.text}>Sin ubicación</Text>
@@ -323,8 +405,13 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
               <Text style={styles.label}>Documento</Text>
               {document ? (
                 <View style={styles.documentRow}>
-                  <Text style={styles.text}>{document.name || "Documento cargado"}</Text>
-                  <TouchableOpacity onPress={handleRemoveDocument} style={styles.removeBtn}>
+                  <Text style={styles.text}>
+                    {document.name || "Documento cargado"}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setDocument(null)}
+                    style={styles.removeBtn}
+                  >
                     <Text style={styles.removeText}>✕</Text>
                   </TouchableOpacity>
                 </View>
@@ -347,6 +434,24 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
           )}
         </View>
       </ScrollView>
+
+      
+      {showCamera && Platform.OS === "web" && (
+        <View style={styles.cameraOverlay}>
+          <View style={styles.cameraContainer}>
+            <video ref={videoRef} autoPlay playsInline style={styles.video} />
+            <canvas ref={canvasRef} style={{ display: "none" }} />
+            <View style={styles.cameraControls}>
+              <ButtonWithShadow onPress={capturePhoto}>
+                <Text style={styles.btnLabel}>Tomar foto</Text>
+              </ButtonWithShadow>
+              <ButtonWithShadow onPress={closeCamera}>
+                <Text style={styles.btnLabel}>Cancelar</Text>
+              </ButtonWithShadow>
+            </View>
+          </View>
+        </View>
+      )}
 
       <Toast />
     </View>
@@ -439,4 +544,46 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   removeText: { color: "#fff", fontWeight: "bold" },
+
+  
+  cameraOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+    padding: 16,
+  },
+  cameraContainer: {
+    width: "100%",
+    maxWidth: 420,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#000",
+    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+    marginTop: 50,
+  },
+  video: {
+    width: "100%",
+    aspectRatio: 4 / 3,
+    borderRadius: 8,
+    marginBottom: 20,
+    backgroundColor: "#000",
+    objectFit: "cover",
+  },
+  cameraControls: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "column",
+    gap: 14,
+  },
 });

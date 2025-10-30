@@ -1,7 +1,7 @@
 const mysql = require("mysql2");
 const bcrypt = require("bcrypt");
 
-const username = "prueba";
+const username = "benja";
 const plainPassword = "111";
 
 function tieneNumeros(str) {
