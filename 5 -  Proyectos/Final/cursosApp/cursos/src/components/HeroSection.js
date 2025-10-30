@@ -7,12 +7,12 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native"; // 👈 Import necesario
+import { useNavigation } from "@react-navigation/native"; 
 
 export default function HeroSection() {
   const { width } = useWindowDimensions();
   const isMobile = width <= 700;
-  const navigation = useNavigation(); // 👈 Hook para navegar entre pantallas
+  const navigation = useNavigation(); 
 
   return (
     <View
@@ -25,10 +25,10 @@ export default function HeroSection() {
         },
       ]}
     >
-      {/* 🔸 FORMA DECORATIVA NARANJA */}
+     
       <View style={styles.orangeShape} />
 
-      {/* IZQUIERDA */}
+
       <View
         style={[
           styles.left,
@@ -38,10 +38,10 @@ export default function HeroSection() {
           },
         ]}
       >
-        {/* Frase corta superior */}
+   
         <Text style={styles.tagline}>Nunca dejes de aprender</Text>
 
-        {/* Título principal */}
+     
         <Text
           style={[
             styles.title,
@@ -54,7 +54,7 @@ export default function HeroSection() {
           Desarrollá tus habilidades{"\n"}con cursos en línea en
         </Text>
 
-        {/* Nombre de la marca */}
+        
         <Text
           style={[
             styles.brand,
@@ -67,17 +67,17 @@ export default function HeroSection() {
           OnLearn
         </Text>
 
-        {/* Botón principal — ahora con navegación */}
+       
         <TouchableOpacity
           style={styles.exploreBtn}
-          onPress={() => navigation.navigate("AllCourses")} // 👈 Acción de navegación
+          onPress={() => navigation.navigate("AllCourses")} 
         >
           <Text style={styles.exploreText}>EXPLORAR CURSOS</Text>
         </TouchableOpacity>
 
       </View>
 
-      {/* DERECHA */}
+
       <View
         style={[
           styles.right,
@@ -102,7 +102,7 @@ export default function HeroSection() {
             ]}
           />
 
-          {/* BURBUJA flotante */}
+         
           <View style={styles.floatingCard}>
             <Text style={styles.floatingText}>250k{"\n"}Estudiantes activos</Text>
           </View>
@@ -117,21 +117,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F9FA",
     paddingVertical: 50,
     paddingHorizontal: 25,
-    overflow: "hidden", // 👈 necesario para recorte del semicírculo
+    overflow: "hidden", 
     position: "relative",
   },
 
-  /* 🔸 Forma decorativa naranja */
+
   orangeShape: {
     position: "absolute",
-    top: -180, // mueve hacia arriba
-    right: -180, // mueve hacia la derecha
-    width: 400, // ancho total
-    height: 400, // alto total
-    backgroundColor: "#FF7A00", // naranja
-    borderTopLeftRadius: 500, // gran curva
+    top: -180, 
+    right: -180, 
+    width: 400, 
+    height: 400, 
+    backgroundColor: "#FF7A00", 
+    borderTopLeftRadius: 500, 
     borderBottomLeftRadius: 500,
-    transform: [{ rotate: "-15deg" }], // leve inclinación
+    transform: [{ rotate: "-15deg" }], 
     opacity: 0.95,
     zIndex: 0,
   },

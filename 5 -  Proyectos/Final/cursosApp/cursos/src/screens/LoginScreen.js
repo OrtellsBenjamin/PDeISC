@@ -23,7 +23,7 @@ const fontImport = `
 const HOME_ROUTE = "Home";
 
 export default function LoginScreen() {
-  const { signInEmail, signInWithGoogle, session } = useContext(AuthContext); // 👈 agregamos signInWithGoogle
+  const { signInEmail, signInWithGoogle, session } = useContext(AuthContext); 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pendingRedirect, setPendingRedirect] = useState(false);
@@ -50,7 +50,6 @@ export default function LoginScreen() {
     ]).start();
   }, []);
 
-  // 🔹 Inicio de sesión con email
   const onLogin = async () => {
     if (!email || !password) {
       Toast.show({
@@ -84,7 +83,7 @@ export default function LoginScreen() {
     }
   };
 
-  // 🔹 Cuando se detecta sesión activa, redirige
+
   useEffect(() => {
     if (!pendingRedirect) return;
     if (session) {
@@ -108,7 +107,7 @@ export default function LoginScreen() {
 
   const isWide = width > 900;
 
-  // 🔹 Inicio de sesión con Google
+
   const handleGoogleLogin = async () => {
     try {
       await signInWithGoogle();
@@ -135,7 +134,7 @@ export default function LoginScreen() {
             { flexDirection: isWide ? "row" : "column" },
           ]}
         >
-          {/* 🟢 Tarjeta de login */}
+
           <Animated.View
             style={[
               styles.card,
@@ -170,14 +169,14 @@ export default function LoginScreen() {
               <Text style={styles.loginText}>Ingresar</Text>
             </TouchableOpacity>
 
-            {/* 🔸 Separador visual */}
+        
             <View style={styles.separatorContainer}>
               <View style={styles.separatorLine} />
               <Text style={styles.separatorText}>o</Text>
               <View style={styles.separatorLine} />
             </View>
 
-            {/* 🔹 Botón de Google */}
+            
             <TouchableOpacity
               style={styles.googleButton}
               onPress={handleGoogleLogin}
@@ -192,7 +191,7 @@ export default function LoginScreen() {
               <Text style={styles.googleText}>Iniciar sesión con Google</Text>
             </TouchableOpacity>
 
-            {/* 🔹 Enlace a registro */}
+      
             <TouchableOpacity
               onPress={() => navigation.navigate("Register")}
               activeOpacity={0.7}
@@ -204,9 +203,8 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </Animated.View>
 
-          {/* 🟣 Imagen ilustrativa */}
           <Image
-            source={require("../../assets/teacher.svg")}
+            source={require("../../assets/Teacher.png")}
             style={[
               styles.sideImage,
               {

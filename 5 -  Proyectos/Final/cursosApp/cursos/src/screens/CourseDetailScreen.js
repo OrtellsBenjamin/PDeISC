@@ -79,7 +79,7 @@ export default function CourseDetailScreen({ route, navigation }) {
 
     try {
       setLoading(true);
-      const res = await fetch("http://192.168.204.1:4000/api/enrollments", {
+      const res = await fetch("https://onlearn-api.onrender.com/api/enrollments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

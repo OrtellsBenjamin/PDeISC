@@ -20,7 +20,7 @@ export default function AdminPanelScreen() {
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [loadingTeachers, setLoadingTeachers] = useState(true);
 
-  const API_URL = "http://192.168.74.1:4000/api";
+  const API_URL = "https://onlearn-api.onrender.com/api";
 
   //Obtener cursos
   const fetchCourses = async () => {

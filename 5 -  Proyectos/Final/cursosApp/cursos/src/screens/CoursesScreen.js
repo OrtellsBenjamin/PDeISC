@@ -21,7 +21,7 @@ export default function CoursesScreen({ navigation }) {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const res = await fetch("http://192.168.74.1/api/courses/popular");
+        const res = await fetch("https://onlearn-api.onrender.com/api/courses/popular");
         const data = await res.json();
         console.log("📦 Cursos obtenidos:", data);
 

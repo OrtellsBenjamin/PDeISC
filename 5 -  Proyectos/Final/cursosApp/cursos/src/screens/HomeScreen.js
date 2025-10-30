@@ -13,7 +13,7 @@ export default function HomeScreen() {
   const categoriasRef = useRef(null);
   const contactoRef = useRef(null);
 
-  // 🔹 Scroll suave hacia la sección indicada
+
   const scrollToSection = (section) => {
     const scrollView = scrollViewRef.current;
     if (!scrollView) return;
@@ -25,11 +25,11 @@ export default function HomeScreen() {
         ? scrollView.getInnerViewNode()
         : scrollView;
 
-      // 🟢 Medimos la posición y hacemos scroll
+
       ref.current.measureLayout(
         innerNode,
         (x, y) => scrollView.scrollTo({ y, animated: true }),
-        (err) => console.warn("⚠️ Error al medir sección:", err)
+        (err) => console.warn("Error al medir sección:", err)
       );
     };
 
@@ -51,30 +51,29 @@ export default function HomeScreen() {
 
   return (
     <>
-      {/* 🔹 El Header recibe la función para navegar entre secciones */}
       <Header onNavigateSection={scrollToSection} />
 
       <ScrollView
         ref={scrollViewRef}
         style={styles.container}
-        contentContainerStyle={styles.scrollContent} // 👈 agregado
+        contentContainerStyle={styles.scrollContent} 
       >
         <HeroSection />
 
-        {/* Sección Cursos */}
+     
         <View ref={cursosRef} collapsable={false}>
           <CoursesSection />
         </View>
 
-        {/* Sección Categorías */}
+       
         <View ref={categoriasRef} collapsable={false}>
           <CategoriesSection />
         </View>
 
-        {/* Sección Info */}
+    
         <InfoSection />
 
-        {/* Sección Contacto (Footer) */}
+   
         <View ref={contactoRef} collapsable={false}>
           <FooterSection />
         </View>
@@ -86,11 +85,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#D2E6E4", // 👈 mismo color que el footer
+    backgroundColor: "#D2E6E4", 
   },
   scrollContent: {
-    paddingBottom: 0, // 👈 evita espacio extra al final
+    paddingBottom: 0, 
     marginBottom: 0,
-    backgroundColor: "#D2E6E4", // 👈 asegura continuidad de color
+    backgroundColor: "#D2E6E4", 
   },
 });

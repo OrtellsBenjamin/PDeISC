@@ -20,9 +20,9 @@ export default function AllCoursesScreen({ navigation, route }) {
   const [loadingCats, setLoadingCats] = useState(true);
   const { width } = useWindowDimensions();
 
-const API_URL = "http://192.168.74.1:4000/api";
+const API_URL = "https://onlearn-api.onrender.com/api";
 
-  // 🔹 Obtener categorías
+  //Obtener categorías
   const fetchCategories = async () => {
     try {
       const res = await fetch(`${API_URL}/courses/categories`);
@@ -35,14 +35,14 @@ const API_URL = "http://192.168.74.1:4000/api";
     }
   };
 
-  // 🔹 Obtener cursos publicados
+  //Obtener cursos publicados
   const fetchCourses = async () => {
     try {
       const res = await fetch(`${API_URL}/courses/published`);
       const data = await res.json();
       setCourses(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("❌ Error cargando cursos:", err);
+      console.error("Error cargando cursos:", err);
     } finally {
       setLoading(false);
     }
@@ -53,7 +53,7 @@ const API_URL = "http://192.168.74.1:4000/api";
     fetchCourses();
   }, []);
 
-  // 🔸 Autoselección si viene desde CategoriesSection
+  //Autoselección si viene desde CategoriesSection
   useEffect(() => {
     if (route?.params?.selectedCategory && categories.length > 0) {
       const found = categories.find(
@@ -67,7 +67,7 @@ const API_URL = "http://192.168.74.1:4000/api";
 
   const numColumns = width < 700 ? 1 : width < 1024 ? 2 : 3;
 
-  // 🔁 Filtrado dinámico
+  //Filtrado dinámico
   const filteredCourses = selectedCategory
     ? courses.filter((c) => c.category_id === selectedCategory)
     : courses;
@@ -81,12 +81,10 @@ const API_URL = "http://192.168.74.1:4000/api";
     );
   }
 
-  // =====================================================
-  // 🧭 UI PRINCIPAL
-  // =====================================================
+
   return (
     <ScrollView style={styles.container}>
-      {/* 🔹 Botón Volver */}
+
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Ionicons name="arrow-back" size={20} color="#fff" style={{ marginRight: 5 }} />
         <Text style={styles.backText}>Volver</Text>
@@ -94,7 +92,7 @@ const API_URL = "http://192.168.74.1:4000/api";
 
       <Text style={styles.title}>Explorá nuestros Cursos</Text>
 
-      {/* 🔹 Categorías */}
+   
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
         {categories.map((cat) => {
           const isActive = selectedCategory === cat.id;
@@ -112,7 +110,7 @@ const API_URL = "http://192.168.74.1:4000/api";
         })}
       </ScrollView>
 
-      {/* 🔹 Cursos */}
+    
       {filteredCourses.length === 0 ? (
         <Text style={styles.emptyText}>
           No hay cursos disponibles en esta categoría.
@@ -131,7 +129,7 @@ const API_URL = "http://192.168.74.1:4000/api";
                       ? "95%"
                       : numColumns === 2
                       ? "47%"
-                      : "31.5%", // 👈 mejor proporción para PC
+                      : "31.5%", 
                 },
               ]}
               onPress={() => navigation.navigate("CourseDetail", { course })}
@@ -157,9 +155,7 @@ const API_URL = "http://192.168.74.1:4000/api";
   );
 }
 
-// =====================================================
-// 🎨 ESTILOS
-// =====================================================
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -209,8 +205,8 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 16, // 🔸 ajustado para menos separación en PC
-    rowGap: 22, // 🔸 espacio vertical más equilibrado
+    gap: 16,
+    rowGap: 22, 
   },
   card: {
     backgroundColor: "#fff",

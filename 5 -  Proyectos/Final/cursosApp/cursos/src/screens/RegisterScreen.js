@@ -234,7 +234,7 @@ export default function RegisterScreen() {
 
           {/* 🟣 Imagen ilustrativa */}
           <Image
-            source={require("../../assets/teacher.svg")}
+            source={require("../../assets/Teacher.png")}
             style={[
               styles.sideImage,
               {

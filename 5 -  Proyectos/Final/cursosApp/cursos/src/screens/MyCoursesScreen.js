@@ -20,7 +20,7 @@ export default function MyCoursesScreen() {
   const [myCreated, setMyCreated] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const API_BASE = "http://192.168.74.1:4000/api";
+  const API_BASE = "https://onlearn-api.onrender.com/api";
   const ENROLL_URL = `${API_BASE}/enrollments/me`;
   const COURSES_URL = `${API_BASE}/courses`;
 

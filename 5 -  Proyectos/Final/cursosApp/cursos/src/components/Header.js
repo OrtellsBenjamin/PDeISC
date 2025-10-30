@@ -116,7 +116,7 @@ export default function Header({ onNavigateSection }) {
       setLocalRole(null);
       closeAllMenus();
     } catch (e) {
-      console.error("❌ Error al cerrar sesión:", e);
+      console.error(" Error al cerrar sesión:", e);
     }
   };
 
@@ -193,7 +193,7 @@ export default function Header({ onNavigateSection }) {
                       },
                     ]}
                   >
-                    {/* 👨‍🎓 Cliente */}
+
                     {localRole === "client" && (
                       <>
                         <TouchableOpacity
@@ -211,7 +211,7 @@ export default function Header({ onNavigateSection }) {
                       </>
                     )}
 
-                    {/* ⏳ Pending Instructor */}
+
                     {localRole === "pending_instructor" && (
                       <>
                         <View style={styles.dropdownItem}>
@@ -237,7 +237,6 @@ export default function Header({ onNavigateSection }) {
                       </>
                     )}
 
-                    {/* 👨‍🏫 Instructor */}
                     {localRole === "instructor" && (
                       <>
                         <TouchableOpacity
@@ -264,7 +263,6 @@ export default function Header({ onNavigateSection }) {
                       </>
                     )}
 
-                    {/* 👑 Admin */}
                     {localRole === "admin" && (
                       <>
                         <TouchableOpacity

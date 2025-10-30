@@ -40,15 +40,15 @@ export default function InfoSection() {
         },
       ]}
     >
-      {/* Imagen ilustrativa */}
+
       <View style={[styles.imageContainer, { width: isMobile ? "100%" : "45%" }]}>
         <Image
-          source={require("../../assets/teacher.svg")} // 👈 mejor usar .png o .jpg
+          source={require("../../assets/Teacher.png")}
           style={styles.image}
         />
       </View>
 
-      {/* Contenido textual */}
+
       <View style={[styles.textContainer, { width: isMobile ? "100%" : "50%" }]}>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>Nuestro equipo</Text>

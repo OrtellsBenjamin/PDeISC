@@ -20,7 +20,7 @@ export default function CoursesSection() {
   const isTablet = width > 700 && width <= 1024;
   const cardsPerRow = isMobile ? 1 : isTablet ? 2 : 3; 
 
-  const API_URL = "http://192.168.74.1:4000/api/courses/popular";
+  const API_URL = "https://onlearn-api.onrender.com/api/courses/popular";
 
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function CoursesSection() {
         //Tomamos solo los primeros 3 cursos
         setCourses(Array.isArray(data) ? data.slice(0, 3) : []);
       } catch (error) {
-        console.error("❌ Error al cargar cursos:", error);
+        console.error(" Error al cargar cursos:", error);
       } finally {
         setLoading(false);
       }
@@ -123,7 +123,7 @@ export default function CoursesSection() {
   );
 }
 
-// 🎨 Estilos
+
 const styles = StyleSheet.create({
   wrapper: {
     backgroundColor: "#FFFFFF",
