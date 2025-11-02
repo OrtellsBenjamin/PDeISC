@@ -104,54 +104,76 @@ export default function AdminPanelScreen() {
     }
   };
 
-  //Aprobar/Rechazar cursos
-  const handleApproveCourse = async (id) => {
-    try {
-      const res = await fetch(`${API_URL}/courses/${id}/approve`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      });
+  // ✅ Aprobar curso
+const handleApproveCourse = async (id) => {
+  try {
+    const res = await fetch(`${API_URL}/courses/${id}/approve`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+    });
 
-      if (!res.ok) throw new Error("No se pudo aprobar el curso");
-
-      Toast.show({
-        type: "success",
-        text1: "Curso publicado 🚀",
-        text2: "El curso ya está visible en la plataforma.",
-      });
-
-      fetchCourses();
-    } catch (e) {
-      Toast.show({ type: "error", text1: "Error", text2: e.message });
+    const contentType = res.headers.get("content-type");
+    let data;
+    if (contentType && contentType.includes("application/json")) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      throw new Error(`Respuesta no válida del servidor: ${text}`);
     }
-  };
 
-  const handleRejectCourse = async (id) => {
-    try {
-      const res = await fetch(`${API_URL}/courses/${id}/reject`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      });
+    if (!res.ok) throw new Error(data?.error || "No se pudo aprobar el curso");
 
-      if (!res.ok) throw new Error("No se pudo rechazar el curso");
+    Toast.show({
+      type: "success",
+      text1: "Curso publicado 🚀",
+      text2: "El curso ya está visible en la plataforma.",
+    });
 
-      Toast.show({
-        type: "info",
-        text1: "Curso rechazado ❌",
-        text2: "El curso fue marcado como rechazado.",
-      });
+    fetchCourses();
+  } catch (e) {
+    console.error("❌ Error al aprobar curso:", e);
+    Toast.show({ type: "error", text1: "Error", text2: e.message });
+  }
+};
 
-      fetchCourses();
-    } catch (e) {
-      Toast.show({ type: "error", text1: "Error", text2: e.message });
+// ❌ Rechazar curso
+const handleRejectCourse = async (id) => {
+  try {
+    const res = await fetch(`${API_URL}/courses/${id}/reject`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+    });
+
+    const contentType = res.headers.get("content-type");
+    let data;
+    if (contentType && contentType.includes("application/json")) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      throw new Error(`Respuesta no válida del servidor: ${text}`);
     }
-  };
+
+    if (!res.ok) throw new Error(data?.error || "No se pudo rechazar el curso");
+
+    Toast.show({
+      type: "info",
+      text1: "Curso rechazado ❌",
+      text2: "El curso fue marcado como rechazado.",
+    });
+
+    fetchCourses();
+  } catch (e) {
+    console.error("❌ Error al rechazar curso:", e);
+    Toast.show({ type: "error", text1: "Error", text2: e.message });
+  }
+};
+
 
   // Loader
   if (loadingCourses || loadingTeachers) {

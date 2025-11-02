@@ -11,18 +11,23 @@ import {
   useWindowDimensions,
   ScrollView,
 } from "react-native";
+import { useFonts, Montserrat_400Regular, Montserrat_700Bold } from "@expo-google-fonts/montserrat";
+import { BricolageGrotesque_700Bold } from "@expo-google-fonts/bricolage-grotesque";
+import AppLoading from "expo-app-loading";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigation } from "@react-navigation/native";
 import Toast from "react-native-toast-message";
-
-const fontImport = `
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
-`;
 
 const HOME_ROUTE = "Home";
 
 export default function RegisterScreen() {
   const { signUpEmail, session } = useContext(AuthContext);
+  const [fontsLoaded] = useFonts({
+    Montserrat_400Regular,
+    Montserrat_700Bold,
+    BricolageGrotesque_700Bold,
+  });
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,6 +56,24 @@ export default function RegisterScreen() {
     ]).start();
   }, []);
 
+   if (!fontsLoaded) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#D2E6E4",
+        }}
+      >
+        <Text style={{ color: "#0B7077", fontWeight: "700", fontSize: 16 }}>
+          Cargando fuentes...
+        </Text>
+      </View>
+    );
+  }
+  
+
   const onRegister = async () => {
     if (!name || !email || !password) {
       Toast.show({
@@ -62,7 +85,6 @@ export default function RegisterScreen() {
     }
 
     try {
-      // 🔹 Crear cuenta
       const result = await signUpEmail(email, password, name, role);
       const possibleError = result?.error || result?.data?.error;
 
@@ -75,7 +97,6 @@ export default function RegisterScreen() {
         return;
       }
 
-      // 🔸 Si el rol es profesor, mostrar aviso y redirigir
       if (role === "pending_instructor") {
         Toast.show({
           type: "info",
@@ -84,7 +105,6 @@ export default function RegisterScreen() {
           visibilityTime: 3000,
         });
 
-        // ✅ Redirigir al Home después de 3 segundos
         setTimeout(() => {
           navigation.reset({
             index: 0,
@@ -92,7 +112,6 @@ export default function RegisterScreen() {
           });
         }, 3000);
       } else {
-        // Si es cliente, usar el flujo normal
         setPendingRedirect(true);
       }
     } catch (e) {
@@ -104,7 +123,6 @@ export default function RegisterScreen() {
     }
   };
 
-  // 🔹 Redirección tras creación (solo para clientes)
   useEffect(() => {
     if (!pendingRedirect) return;
     if (session) {
@@ -134,8 +152,6 @@ export default function RegisterScreen() {
       style={{ backgroundColor: "#D2E6E4" }}
     >
       <View style={styles.container}>
-        <style>{fontImport}</style>
-
         <View
           style={[
             styles.responsiveLayout,
@@ -282,17 +298,16 @@ const styles = StyleSheet.create({
   sideImage: { opacity: 0.95 },
   title: {
     fontSize: 28,
-    fontWeight: "800",
     color: "#0B7077",
     marginBottom: 6,
-    fontFamily: "Bricolage Grotesque, sans-serif",
+    fontFamily: "BricolageGrotesque_700Bold",
     textAlign: "center",
   },
   subtitle: {
     fontSize: 15,
     color: "#555",
     marginBottom: 25,
-    fontFamily: "Montserrat, sans-serif",
+    fontFamily: "Montserrat_400Regular",
     textAlign: "center",
   },
   input: {
@@ -305,7 +320,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     fontSize: 15,
     marginBottom: 14,
-    fontFamily: "Montserrat, sans-serif",
+    fontFamily: "Montserrat_400Regular",
   },
   roleContainer: {
     flexDirection: "row",
@@ -329,7 +344,7 @@ const styles = StyleSheet.create({
   },
   roleText: {
     color: "#555",
-    fontFamily: "Montserrat, sans-serif",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "600",
   },
   roleTextActive: { color: "#fff" },
@@ -344,18 +359,16 @@ const styles = StyleSheet.create({
   loginText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "700",
-    fontFamily: "Montserrat, sans-serif",
+    fontFamily: "Montserrat_700Bold",
   },
   linkText: {
     marginTop: 20,
     color: "#555",
     fontSize: 14,
-    fontFamily: "Bricolage Grotesque, sans-serif",
+    fontFamily: "BricolageGrotesque_700Bold",
   },
   highlight: {
     color: "#FF7A00",
-    fontWeight: "700",
-    fontFamily: "Montserrat, sans-serif",
+    fontFamily: "Montserrat_700Bold",
   },
 });

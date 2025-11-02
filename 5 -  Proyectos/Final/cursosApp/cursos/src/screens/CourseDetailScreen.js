@@ -45,7 +45,7 @@ export default function CourseDetailScreen({ route, navigation }) {
   useEffect(() => {
     const fetchSyllabus = async () => {
       try {
-        const res = await fetch(`http://192.168.204.1:4000/api/courses/${course.id}/lessons`);
+        const res = await fetch(`https://onlearn-api.onrender.com/api/courses/${course.id}/lessons`);
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
 

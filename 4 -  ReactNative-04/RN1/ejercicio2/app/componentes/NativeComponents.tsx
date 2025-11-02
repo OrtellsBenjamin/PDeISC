@@ -16,6 +16,7 @@ import {
   Alert,
   RefreshControl,
   StyleSheet,
+  useWindowDimensions,
 } from "react-native";
 import Slider from "@react-native-community/slider";
 
@@ -26,6 +27,10 @@ export default function NativeComponents() {
   const [modalVisible, setModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [slideValue, setSlideValue] = useState(0);
+
+  const { width } = useWindowDimensions();
+  const isTablet = width > 700 && width <= 1024;
+  const isMobile = width <= 700;
 
   const data = [
     { id: "1", name: "Manzana" },
@@ -43,38 +48,48 @@ export default function NativeComponents() {
     setTimeout(() => setRefreshing(false), 1500);
   };
 
+  // 🔹 Determinamos el ancho de cada tarjeta según el dispositivo
+  const getBoxWidth = () => {
+    if (isMobile) return "100%";
+    if (isTablet) return "47%";
+    return "31%"; // desktop
+  };
+
   return (
     <ScrollView
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
-      <View style={styles.row}>
-        <View style={styles.box}>
+      <View style={styles.grid}>
+        {/* Text */}
+        <View style={[styles.box, { width: getBoxWidth() }]}>
           <Text style={styles.title}>Text</Text>
           <Text>Se usa para mostrar texto en pantalla.</Text>
         </View>
 
-        <View style={styles.box}>
+        {/* View */}
+        <View style={[styles.box, { width: getBoxWidth() }]}>
           <Text style={styles.title}>View</Text>
           <View style={styles.colorBox} />
           <Text>Contenedor para otros elementos.</Text>
         </View>
 
-        <View style={styles.box}>
+        {/* Button */}
+        <View style={[styles.box, { width: getBoxWidth() }]}>
           <Text style={styles.title}>Button</Text>
           <Button title="Presióname" onPress={() => Alert.alert("Botón", "Click")} />
         </View>
-      </View>
 
-      <View style={styles.row}>
-        <View style={styles.box}>
+        {/* Pressable */}
+        <View style={[styles.box, { width: getBoxWidth() }]}>
           <Text style={styles.title}>Pressable</Text>
           <Pressable style={styles.pressable} onPress={() => Alert.alert("Pressable", "Presionado")}>
             <Text style={styles.touchText}>Tócame</Text>
           </Pressable>
         </View>
 
-        <View style={styles.box}>
+        {/* TouchableOpacity */}
+        <View style={[styles.box, { width: getBoxWidth() }]}>
           <Text style={styles.title}>TouchableOpacity</Text>
           <TouchableOpacity
             style={styles.touch}
@@ -84,18 +99,18 @@ export default function NativeComponents() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.box}>
+        {/* Image */}
+        <View style={[styles.box, { width: getBoxWidth() }]}>
           <Text style={styles.title}>Image</Text>
           <Image
             source={{ uri: "https://reactnative.dev/img/tiny_logo.png" }}
-            style={{ width: 50, height: 50 }}
+            style={{ width: 50, height: 50, marginBottom: 8 }}
           />
           <Text>Muestra imágenes desde URL o assets locales.</Text>
         </View>
-      </View>
 
-      <View style={styles.row}>
-        <View style={styles.box}>
+        {/* TextInput */}
+        <View style={[styles.box, { width: getBoxWidth() }]}>
           <Text style={styles.title}>TextInput</Text>
           <TextInput
             style={styles.input}
@@ -106,13 +121,15 @@ export default function NativeComponents() {
           <Text>Texto ingresado: {text}</Text>
         </View>
 
-        <View style={styles.box}>
+        {/* Switch */}
+        <View style={[styles.box, { width: getBoxWidth() }]}>
           <Text style={styles.title}>Switch</Text>
           <Switch value={isEnabled} onValueChange={setIsEnabled} />
           <Text>{isEnabled ? "Encendido" : "Apagado"}</Text>
         </View>
 
-        <View style={styles.box}>
+        {/* ActivityIndicator */}
+        <View style={[styles.box, { width: getBoxWidth() }]}>
           <Text style={styles.title}>ActivityIndicator</Text>
           {loading ? (
             <ActivityIndicator size="large" color="blue" />
@@ -120,10 +137,9 @@ export default function NativeComponents() {
             <Button title="Mostrar Cargando" onPress={() => setLoading(true)} />
           )}
         </View>
-      </View>
 
-      <View style={styles.row}>
-        <View style={styles.box}>
+        {/* FlatList */}
+        <View style={[styles.box, { width: getBoxWidth() }]}>
           <Text style={styles.title}>FlatList</Text>
           <FlatList
             data={data}
@@ -132,7 +148,8 @@ export default function NativeComponents() {
           />
         </View>
 
-        <View style={styles.box}>
+        {/* SectionList */}
+        <View style={[styles.box, { width: getBoxWidth() }]}>
           <Text style={styles.title}>SectionList</Text>
           <SectionList
             sections={sections}
@@ -144,7 +161,8 @@ export default function NativeComponents() {
           />
         </View>
 
-        <View style={styles.box}>
+        {/* Modal */}
+        <View style={[styles.box, { width: getBoxWidth() }]}>
           <Text style={styles.title}>Modal</Text>
           <Button title="Abrir Modal" onPress={() => setModalVisible(true)} />
           <Modal visible={modalVisible} transparent animationType="slide">
@@ -157,7 +175,8 @@ export default function NativeComponents() {
           </Modal>
         </View>
 
-        <View style={styles.box}>
+        {/* Slider */}
+        <View style={[styles.box, { width: getBoxWidth() }]}>
           <Text style={styles.title}>Slider</Text>
           <Slider
             style={styles.slider}
@@ -182,35 +201,34 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: "#f0f2f5",
   },
-  row: {
+  grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
   },
   box: {
-    flexBasis: "30%",
+    backgroundColor: "#fff",
+    borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowRadius: 5,
+    elevation: 3,
   },
   title: {
     fontSize: 18,
     fontWeight: "700",
-    marginBottom: 12,
+    marginBottom: 10,
     color: "#333",
   },
   colorBox: {
     width: 60,
     height: 60,
     backgroundColor: "#4a90e2",
-    marginBottom: 12,
     borderRadius: 8,
+    marginBottom: 8,
   },
   input: {
     borderWidth: 1,
@@ -237,7 +255,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   touchText: { color: "#fff", fontWeight: "bold" },
-  sectionHeader: { fontWeight: "700", fontSize: 16, marginTop: 12, color: "#555" },
+  sectionHeader: {
+    fontWeight: "700",
+    fontSize: 16,
+    marginTop: 12,
+    color: "#555",
+  },
   modalContainer: {
     flex: 1,
     justifyContent: "center",
@@ -250,11 +273,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     width: "80%",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 6,
   },
   slider: {
     width: "100%",

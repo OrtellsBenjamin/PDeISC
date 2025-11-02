@@ -18,13 +18,13 @@ export default function MyCoursesScreen() {
   const navigation = useNavigation();
   const [enrollments, setEnrollments] = useState([]);
   const [myCreated, setMyCreated] = useState([]);
+  const [allCourses, setAllCourses] = useState([]); // 👈 nuevo estado
   const [loading, setLoading] = useState(true);
 
   const API_BASE = "https://onlearn-api.onrender.com/api";
   const ENROLL_URL = `${API_BASE}/enrollments/me`;
   const COURSES_URL = `${API_BASE}/courses`;
 
-  // 🔁 Cargar datos solo cuando la sesión y el perfil estén listos
   useFocusEffect(
     React.useCallback(() => {
       if (session && profile) fetchData();
@@ -45,9 +45,16 @@ export default function MyCoursesScreen() {
         fetchCreated = fetch(`${COURSES_URL}?instructor_id=${profile.id}`);
       }
 
-      const [resEnroll, resCreated] = await Promise.allSettled([
+      // 👇 si es admin, también traemos todos los cursos
+      let fetchAll = Promise.resolve({ ok: true, json: async () => [] });
+      if (profile?.role === "admin") {
+        fetchAll = fetch(COURSES_URL);
+      }
+
+      const [resEnroll, resCreated, resAll] = await Promise.allSettled([
         fetchEnrollments,
         fetchCreated,
+        fetchAll,
       ]);
 
       if (resEnroll.status === "fulfilled") {
@@ -63,11 +70,17 @@ export default function MyCoursesScreen() {
         const dataCreated = await createdResp.json();
         setMyCreated(Array.isArray(dataCreated) ? dataCreated : []);
       } else setMyCreated([]);
+
+      if (resAll.status === "fulfilled") {
+        const allResp = resAll.value;
+        const dataAll = await allResp.json();
+        setAllCourses(Array.isArray(dataAll) ? dataAll : []);
+      } else setAllCourses([]);
     } catch (err) {
       console.error("❌ Error cargando cursos:", err);
       Toast.show({
         type: "error",
-        text1: "Error al cargar tus cursos",
+        text1: "Error al cargar cursos",
         text2: "Intentá nuevamente más tarde.",
       });
     } finally {
@@ -75,7 +88,6 @@ export default function MyCoursesScreen() {
     }
   };
 
-  // 🔁 Resetear progreso
   const resetProgress = async (courseId) => {
     try {
       const res = await fetch(`${API_BASE}/enrollments/${courseId}/progress`, {
@@ -96,7 +108,6 @@ export default function MyCoursesScreen() {
     }
   };
 
-  // 🗑️ Eliminar curso
   const deleteCourseNow = async (id, title) => {
     try {
       const res = await fetch(`${COURSES_URL}/${id}`, {
@@ -117,6 +128,7 @@ export default function MyCoursesScreen() {
       });
 
       setMyCreated((prev) => prev.filter((c) => c.id !== id));
+      setAllCourses((prev) => prev.filter((c) => c.id !== id)); // 👈 también elimina de la lista admin
     } catch (err) {
       console.error("❌ Error al eliminar curso:", err);
       Toast.show({
@@ -145,7 +157,6 @@ export default function MyCoursesScreen() {
     });
   };
 
-  // ▶️ Entrar a curso
   const enterCourse = (item) => {
     const finished = (item.progress || 0) >= 100;
     if (!finished) {
@@ -173,7 +184,6 @@ export default function MyCoursesScreen() {
     });
   };
 
-  // Loader global
   if (loading) {
     return (
       <View style={styles.loader}>
@@ -183,7 +193,6 @@ export default function MyCoursesScreen() {
     );
   }
 
-  // 🧭 UI
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
@@ -277,8 +286,7 @@ export default function MyCoursesScreen() {
                         { backgroundColor: "#0B7077" },
                       ]}
                       onPress={() =>
-                        navigation.navigate("EditPortada", { course 
-                        })
+                        navigation.navigate("EditPortada", { course })
                       }
                     >
                       <Ionicons name="create-outline" size={18} color="#fff" />
@@ -323,11 +331,69 @@ export default function MyCoursesScreen() {
           )}
         </>
       )}
+
+      {/* 🌍 NUEVA sección para ADMIN */}
+      {profile?.role === "admin" && (
+        <>
+          <Text style={[styles.sectionTitle, { marginTop: 30 }]}>
+            Todos los cursos (vista admin)
+          </Text>
+
+          {allCourses.length === 0 ? (
+            <Text style={styles.noCoursesText}>
+              No hay cursos cargados en la plataforma.
+            </Text>
+          ) : (
+            allCourses.map((course) => (
+              <View key={course.id} style={styles.card}>
+                <Image
+                  source={{
+                    uri:
+                      course.image_url ||
+                      "https://placehold.co/600x400?text=Sin+imagen",
+                  }}
+                  style={styles.image}
+                />
+                <View style={styles.info}>
+                  <Text style={styles.courseTitle}>{course.title}</Text>
+                  <Text numberOfLines={2} style={styles.desc}>
+                    {course.description || "Sin descripción."}
+                  </Text>
+                  <Text style={{ color: "#555", fontSize: 12 }}>
+                    Creador: {course.owner}
+                  </Text>
+                  <Text style={{ color: "#0B7077", fontWeight: "600" }}>
+                    Estado: {course.status}
+                  </Text>
+
+                  {/* 👇 Botón eliminar visible para admin */}
+                  <TouchableOpacity
+                    style={[
+                      styles.actionButton,
+                      {
+                        backgroundColor: "#E63946",
+                        alignSelf: "flex-start",
+                        marginTop: 8,
+                      },
+                    ]}
+                    onPress={() =>
+                      handleDeleteCourse(course.id, course.title)
+                    }
+                  >
+                    <Ionicons name="trash-outline" size={18} color="#fff" />
+                    <Text style={styles.actionText}>Eliminar curso</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))
+          )}
+        </>
+      )}
     </ScrollView>
   );
 }
 
-// 🎨 Estilos
+// 🎨 Estilos idénticos a los tuyos
 const styles = StyleSheet.create({
   container: {
     flex: 1,

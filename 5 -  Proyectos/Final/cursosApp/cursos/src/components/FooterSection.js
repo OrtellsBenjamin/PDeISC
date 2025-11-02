@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#D2E6E4",
     paddingVertical: 40,
     paddingHorizontal: 20,
-    height: "100%",
+    height: "45%",
   },
   footerContent: {
     flexWrap: "wrap",

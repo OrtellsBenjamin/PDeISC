@@ -7,40 +7,35 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-
-    "scheme": "onlearn",               
+    "scheme": "onlearn",
     "extra": {
       "supabaseUrl": "https://sihlbryyokpepujxatut.supabase.co",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpaGxicnl5b2twZXB1anhhdHV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzOTk0MzksImV4cCI6MjA3Njk3NTQzOX0.jm-E6wcMBycdRoCS3xyOVslE0YvAx29N1qX10iwgWSY"   
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpaGxicnl5b2twZXB1anhhdHV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzOTk0MzksImV4cCI6MjA3Njk3NTQzOX0.jm-E6wcMBycdRoCS3xyOVslE0YvAx29N1qX10iwgWSY"
     },
-
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cursos.app"        
+      "bundleIdentifier": "com.cursos.app"
     },
-
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.cursos.app",                
+      "package": "com.cursos.app",
       "edgeToEdgeEnabled": true
     },
-
     "web": {
       "favicon": "./assets/favicon.png"
     },
-
     "plugins": [
       "react-native-video",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-font"
     ]
   }
 }

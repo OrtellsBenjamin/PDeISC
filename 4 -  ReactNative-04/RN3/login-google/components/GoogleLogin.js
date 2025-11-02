@@ -6,7 +6,6 @@ import {
   Animated,
   StyleSheet,
   Image,
-  Platform,
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
@@ -23,7 +22,7 @@ export default function GoogleLogin({ setUserInfo }) {
     expoClientId,
     androidClientId,
     webClientId,
-    scopes: ["profile", "email"],
+    scopes: ["openid", "profile", "email"],
     extraParams: { prompt: "select_account" },
   });
 
@@ -33,20 +32,35 @@ export default function GoogleLogin({ setUserInfo }) {
     if (response.type === "success" && response.authentication?.accessToken) {
       const { accessToken } = response.authentication;
 
-      fetch("https://www.googleapis.com/userinfo/v2/me", {
+      fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
         .then((res) => res.json())
         .then((data) => {
-          console.log("Usuario obtenido:", data);
-          setUserInfo(data);
+          console.log("✅ Datos del usuario desde Google:", data);
+
+          // 🔹 Obtener la imagen de perfil en mejor calidad
+          let pictureUrl = data.picture;
+          if (pictureUrl) {
+            // Remover cualquier parámetro de tamaño y agregar uno de alta calidad
+            pictureUrl = pictureUrl.split('=')[0] + '=s400-c';
+          }
+
+          const formattedUser = {
+            name: data.name,
+            email: data.email,
+            picture: pictureUrl,
+          };
+
+          console.log("📸 URL de imagen guardada:", pictureUrl);
+          console.log("👤 Usuario completo:", formattedUser);
+          setUserInfo(formattedUser);
         })
         .catch((err) => console.error("❌ Error al obtener usuario:", err));
     } else if (response.type === "error") {
       console.error("Error en la autenticación:", response.error);
     }
   }, [response]);
-
 
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -106,7 +120,6 @@ export default function GoogleLogin({ setUserInfo }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: "center", alignItems: "center" },
-
   shadowBox: {
     position: "absolute",
     width: 270,
@@ -116,7 +129,6 @@ const styles = StyleSheet.create({
     transform: [{ translateX: 5 }, { translateY: 5 }],
     zIndex: -1,
   },
-
   button: {
     flexDirection: "row",
     alignItems: "center",
@@ -129,16 +141,6 @@ const styles = StyleSheet.create({
     borderColor: "#5c5c5cff",
     gap: 10,
   },
-
-  googleIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 8,
-  },
-
-  btnText: {
-    color: "#5c5c5cff",
-    fontWeight: "700",
-    fontSize: 16,
-  },
+  googleIcon: { width: 20, height: 20, marginRight: 8 },
+  btnText: { color: "#5c5c5cff", fontWeight: "700", fontSize: 16 },
 });

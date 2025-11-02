@@ -94,7 +94,7 @@ export default function Header({ onNavigateSection }) {
     Animated.timing(fadeAnim, {
       toValue: toOpen ? 1 : 0,
       duration: 200,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   };
 
@@ -105,7 +105,7 @@ export default function Header({ onNavigateSection }) {
     Animated.timing(dropdownAnim, {
       toValue: toOpen ? 1 : 0,
       duration: 200,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   };
 
@@ -141,7 +141,7 @@ export default function Header({ onNavigateSection }) {
     Animated.timing(transitionAnim, {
       toValue: session ? 1 : 0.8,
       duration: 300,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, [session]);
 

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -74,7 +74,13 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
   const [showCamera, setShowCamera] = useState(false);
   const [stream, setStream] = useState(null);
 
-  const originalRef = useRef({ name, phone, photo, location, document });
+  const originalRef = useRef({ 
+    name: userInfo?.name || "", 
+    phone: userInfo?.phone || "", 
+    photo: userInfo?.picture || null, 
+    location: userInfo?.location || null, 
+    document: userInfo?.document || null 
+  });
   const imageInputRef = useRef(null);
   const documentInputRef = useRef(null);
   const videoRef = useRef(null);
@@ -82,6 +88,18 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
   const { width } = useWindowDimensions();
   const { height: screenHeight } = Dimensions.get("window");
   const isTabletOrPc = width >= 768;
+
+  // 🔹 Sincronizar photo cuando userInfo cambie
+  useEffect(() => {
+    console.log("🔍 userInfo completo:", userInfo);
+    console.log("📸 userInfo.picture:", userInfo?.picture);
+    
+    if (userInfo?.picture && userInfo.picture !== photo) {
+      console.log("✅ Actualizando foto de perfil:", userInfo.picture);
+      setPhoto(userInfo.picture);
+      originalRef.current.photo = userInfo.picture;
+    }
+  }, [userInfo]);
 
   const pickImage = async () => {
     if (Platform.OS === "web") {
@@ -136,9 +154,6 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
     });
   };
 
-  // ===========================
-  //   CÁMARA (WEB)
-  // ===========================
   const openCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -245,8 +260,31 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
   };
 
   const isValidPhone = (num) => /^[0-9]{7,15}$/.test(num);
+  const isValidName = (name) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(name.trim());
 
   const handleSave = () => {
+    if (!name.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Nombre requerido",
+        text2: "El nombre no puede estar vacío.",
+        position: "top",
+        visibilityTime: 1500,
+      });
+      return;
+    }
+
+    if (!isValidName(name)) {
+      Toast.show({
+        type: "error",
+        text1: "Nombre inválido",
+        text2: "El nombre solo puede contener letras y espacios.",
+        position: "top",
+        visibilityTime: 1500,
+      });
+      return;
+    }
+
     if (!isValidPhone(phone)) {
       Toast.show({
         type: "error",
@@ -262,8 +300,8 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
       ...userInfo,
       name,
       email,
+      picture: photo,
       phone,
-      photo,
       location,
       document,
     };
@@ -370,12 +408,17 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
                 <Text style={styles.btnLabel}>Cambiar foto</Text>
               </ButtonWithShadow>
 
-              <ButtonWithShadow half={isTabletOrPc} onPress={openCamera}>
-                <Text style={styles.btnLabel}>Tomar foto</Text>
-              </ButtonWithShadow>
-
               <Text style={styles.label}>Nombre</Text>
-              <TextInput style={styles.input} value={name} onChangeText={setName} />
+              <TextInput 
+                style={styles.input} 
+                value={name} 
+                onChangeText={(text) => {
+                  // Filtrar números y caracteres especiales mientras escribe
+                  const filteredText = text.replace(/[0-9]/g, "");
+                  setName(filteredText);
+                }}
+                placeholder="Ej: Juan Pérez"
+              />
 
               <Text style={styles.label}>Teléfono</Text>
               <TextInput
@@ -435,7 +478,6 @@ export default function ProfileScreen({ userInfo, setUserInfo }) {
         </View>
       </ScrollView>
 
-      
       {showCamera && Platform.OS === "web" && (
         <View style={styles.cameraOverlay}>
           <View style={styles.cameraContainer}>
@@ -507,6 +549,8 @@ const styles = StyleSheet.create({
     borderRadius: 55,
     marginBottom: 10,
     alignSelf: "center",
+    borderWidth: 2,
+    borderColor: "#000",
   },
   buttonBase: {
     backgroundColor: "#909eeeff",
@@ -545,7 +589,6 @@ const styles = StyleSheet.create({
   },
   removeText: { color: "#fff", fontWeight: "bold" },
 
-  
   cameraOverlay: {
     position: "fixed",
     top: 0,

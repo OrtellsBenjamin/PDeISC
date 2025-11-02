@@ -10,20 +10,26 @@ import {
   Image,
   useWindowDimensions,
   ScrollView,
+  Platform,
 } from "react-native";
+import { useFonts, Montserrat_400Regular, Montserrat_700Bold } from "@expo-google-fonts/montserrat";
+import { BricolageGrotesque_700Bold } from "@expo-google-fonts/bricolage-grotesque";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigation } from "@react-navigation/native";
 import Toast from "react-native-toast-message";
-import { Ionicons } from "@expo/vector-icons"; // 👈 agregado
+import { Ionicons } from "@expo/vector-icons";
 
-const fontImport = `
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
-`;
 
 const HOME_ROUTE = "Home";
 
 export default function LoginScreen() {
-  const { signInEmail, signInWithGoogle, session } = useContext(AuthContext); 
+  const { signInEmail, signInWithGoogle, session } = useContext(AuthContext);
+  const [fontsLoaded] = useFonts({
+    Montserrat_400Regular,
+    Montserrat_700Bold,
+    BricolageGrotesque_700Bold,
+  });
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pendingRedirect, setPendingRedirect] = useState(false);
@@ -83,7 +89,6 @@ export default function LoginScreen() {
     }
   };
 
-
   useEffect(() => {
     if (!pendingRedirect) return;
     if (session) {
@@ -107,7 +112,6 @@ export default function LoginScreen() {
 
   const isWide = width > 900;
 
-
   const handleGoogleLogin = async () => {
     try {
       await signInWithGoogle();
@@ -120,103 +124,95 @@ export default function LoginScreen() {
     }
   };
 
+  // 👇 Cambio aquí: se muestra el loader sin cortar el orden de hooks
   return (
-    <ScrollView
-      contentContainerStyle={{ flexGrow: 1 }}
-      style={{ backgroundColor: "#D2E6E4" }}
-    >
+    <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: "#D2E6E4" }}>
       <View style={styles.container}>
-        <style>{fontImport}</style>
-
-        <View
-          style={[
-            styles.responsiveLayout,
-            { flexDirection: isWide ? "row" : "column" },
-          ]}
-        >
-
-          <Animated.View
+        {!fontsLoaded ? (
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <Text style={{ color: "#0B7077", fontWeight: "700", fontSize: 16 }}>
+              Cargando fuentes...
+            </Text>
+          </View>
+        ) : (
+          <View
             style={[
-              styles.card,
-              {
-                opacity: fadeAnim,
-                transform: [{ scale: scaleAnim }],
-                width: isWide ? 400 : "90%",
-              },
+              styles.responsiveLayout,
+              { flexDirection: isWide ? "row" : "column" },
             ]}
           >
-            <Text style={styles.title}>Iniciar sesión</Text>
-            <Text style={styles.subtitle}>Bienvenido a Onlearn</Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Correo electrónico"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              placeholderTextColor="#888"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Contraseña"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholderTextColor="#888"
-            />
-
-            <TouchableOpacity style={styles.loginButton} onPress={onLogin}>
-              <Text style={styles.loginText}>Ingresar</Text>
-            </TouchableOpacity>
-
-        
-            <View style={styles.separatorContainer}>
-              <View style={styles.separatorLine} />
-              <Text style={styles.separatorText}>o</Text>
-              <View style={styles.separatorLine} />
-            </View>
-
-            
-            <TouchableOpacity
-              style={styles.googleButton}
-              onPress={handleGoogleLogin}
-              activeOpacity={0.85}
+            <Animated.View
+              style={[
+                styles.card,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ scale: scaleAnim }],
+                  width: isWide ? 400 : "90%",
+                },
+              ]}
             >
-              <Ionicons
-                name="logo-google"
-                size={20}
-                color="#fff"
-                style={{ marginRight: 8 }}
+              <Text style={styles.title}>Iniciar sesión</Text>
+              <Text style={styles.subtitle}>Bienvenido a Onlearn</Text>
+
+              <TextInput
+                style={styles.input}
+                placeholder="Correo electrónico"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                placeholderTextColor="#888"
               />
-              <Text style={styles.googleText}>Iniciar sesión con Google</Text>
-            </TouchableOpacity>
+              <TextInput
+                style={styles.input}
+                placeholder="Contraseña"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                placeholderTextColor="#888"
+              />
 
-      
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Register")}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.linkText}>
-                ¿No tenés cuenta?{" "}
-                <Text style={styles.highlight}>Creá una ahora</Text>
-              </Text>
-            </TouchableOpacity>
-          </Animated.View>
+              <TouchableOpacity style={styles.loginButton} onPress={onLogin}>
+                <Text style={styles.loginText}>Ingresar</Text>
+              </TouchableOpacity>
 
-          <Image
-            source={require("../../assets/Teacher.png")}
-            style={[
-              styles.sideImage,
-              {
-                width: isWide ? 420 : 280,
-                height: isWide ? 420 : 240,
-                marginTop: isWide ? 0 : 40,
-                marginBottom: isWide ? 0 : 40,
-              },
-            ]}
-            resizeMode="contain"
-          />
-        </View>
+              <View style={styles.separatorContainer}>
+                <View style={styles.separatorLine} />
+                <Text style={styles.separatorText}>o</Text>
+                <View style={styles.separatorLine} />
+              </View>
+
+              <TouchableOpacity
+                style={styles.googleButton}
+                onPress={handleGoogleLogin}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="logo-google" size={20} color="#fff" style={{ marginRight: 8 }} />
+                <Text style={styles.googleText}>Iniciar sesión con Google</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => navigation.navigate("Register")} activeOpacity={0.7}>
+                <Text style={styles.linkText}>
+                  ¿No tenés cuenta?{" "}
+                  <Text style={styles.highlight}>Creá una ahora</Text>
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <Image
+              source={require("../../assets/Teacher.png")}
+              style={[
+                styles.sideImage,
+                {
+                  width: isWide ? 420 : 280,
+                  height: isWide ? 420 : 240,
+                  marginTop: isWide ? 0 : 40,
+                  marginBottom: isWide ? 0 : 40,
+                },
+              ]}
+              resizeMode="contain"
+            />
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -238,65 +234,89 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 18,
-    padding: 28,
+    backgroundColor: "#fff",    
+    borderRadius: 20,
+    paddingVertical: 40,
+    paddingHorizontal: 60,
     alignItems: "center",
-    elevation: 6,
+    elevation: 8,
     shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
-    maxWidth: 420,
+    maxWidth:Platform.select({
+      web: 400,
+      android:350,
+    }),
+    marginTop:Platform.select({
+      web:0,
+      android:60,
+    }),
+    width: "70%",
+    marginBottom:Platform.select({
+      web:0,
+      android:-60,
+    }),
   },
   sideImage: {
     opacity: 0.95,
   },
   title: {
     fontSize: 28,
-    fontWeight: "800",
     color: "#0B7077",
     marginBottom: 6,
-    fontFamily: "Bricolage Grotesque, sans-serif",
+    fontFamily: "BricolageGrotesque_700Bold",
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 15,
-    color: "#555",
+    fontSize: 16,
+    color: "#444",
     marginBottom: 25,
-    fontFamily: "Montserrat, sans-serif",
+    fontFamily: "Montserrat_400Regular",
     textAlign: "center",
   },
   input: {
-    width: "100%",
+    width:Platform.select({
+      web: "100%",
+      android:300,
+    }),
     backgroundColor: "#F2F6F5",
-    borderWidth: 1.4,
+    borderWidth: 1.5,
     borderColor: "#D2E6E4",
     paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderRadius: 8,
+    paddingHorizontal: Platform.select({
+      web:20,
+      android:15,
+    }),
+    borderRadius: 10,
     fontSize: 15,
-    marginBottom: 14,
-    fontFamily: "Montserrat, sans-serif",
+    fontFamily: "Montserrat_400Regular",
+    marginBottom: 15,
+    color: "#333",
   },
   loginButton: {
-    width: "100%",
+    width:Platform.select({
+      web: "100%",
+      android:300,
+    }),
     backgroundColor: "#0B7077",
-    paddingVertical: 13,
-    borderRadius: 8,
+    paddingVertical: 14,
+    borderRadius: 10,
+    padding:30,
     alignItems: "center",
+    justifyContent: "center",
     marginTop: 6,
   },
   loginText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "700",
-    fontFamily: "Montserrat, sans-serif",
+    fontFamily: "Montserrat_700Bold",
   },
   separatorContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 18,
+    justifyContent: "center",
+    marginVertical: 20,
     width: "100%",
   },
   separatorLine: {
@@ -307,33 +327,34 @@ const styles = StyleSheet.create({
   separatorText: {
     marginHorizontal: 10,
     color: "#888",
-    fontFamily: "Montserrat, sans-serif",
+    fontFamily: "Montserrat_400Regular",
   },
   googleButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#DB4437",
-    borderRadius: 8,
-    paddingVertical: 11,
-    paddingHorizontal: 10,
+    borderRadius: 10,
+    paddingVertical: 13,
+    paddingHorizontal: 12,
     width: "100%",
+    marginBottom: 10,
   },
   googleText: {
     color: "#fff",
     fontWeight: "600",
     fontSize: 14,
-    fontFamily: "Montserrat, sans-serif",
+    fontFamily: "Montserrat_400Regular",
   },
   linkText: {
-    marginTop: 20,
+    marginTop: 18,
     color: "#555",
     fontSize: 14,
-    fontFamily: "Bricolage Grotesque, sans-serif",
+    textAlign: "center",
+    fontFamily: "BricolageGrotesque_700Bold",
   },
   highlight: {
     color: "#FF7A00",
-    fontWeight: "700",
-    fontFamily: "Montserrat, sans-serif",
+    fontFamily: "Montserrat_700Bold",
   },
 });
