@@ -17,18 +17,18 @@ export default function CoursesScreen({ navigation }) {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Cargar cursos reales del backend
+  //Cargar cursos reales del backend
   useEffect(() => {
     const fetchCourses = async () => {
       try {
         const res = await fetch("https://onlearn-api.onrender.com/api/courses/popular");
         const data = await res.json();
-        console.log("📦 Cursos obtenidos:", data);
+        console.log("Cursos obtenidos:", data);
 
         if (Array.isArray(data)) setCourses(data);
         else setCourses([]);
       } catch (err) {
-        console.error("❌ Error cargando cursos populares:", err);
+        console.error("Error cargando cursos populares:", err);
         setCourses([]);
       } finally {
         setLoading(false);
@@ -48,10 +48,10 @@ export default function CoursesScreen({ navigation }) {
 
   return (
     <ScrollView style={styles.container}>
-      {/* 🔸 Título */}
+      {/*Título */}
       <Text style={styles.title}>Cursos Populares</Text>
 
-      {/* 🔸 Botón "Ver todos" */}
+      {/*Botón "Ver todos" */}
       <TouchableOpacity
         style={styles.viewAllBtn}
         onPress={() => navigation.navigate("AllCourses")}
@@ -59,7 +59,7 @@ export default function CoursesScreen({ navigation }) {
         <Text style={styles.viewAllText}>Ver todos los cursos ➜</Text>
       </TouchableOpacity>
 
-      {/* 🔸 Tarjetas */}
+      {/*Tarjetas */}
       <View
         style={[
           styles.cardsContainer,
@@ -67,10 +67,10 @@ export default function CoursesScreen({ navigation }) {
         ]}
       >
         {courses.length === 0 ? (
-          <Text style={styles.emptyText}>No hay cursos publicados todavía 😔</Text>
+          <Text style={styles.emptyText}>No hay cursos publicados todavía</Text>
         ) : (
           courses
-            .slice(0, 4) // 👈 Solo los primeros 4 cursos
+            .slice(0, 4)
             .map((course) => (
               <TouchableOpacity
                 key={course.id}
@@ -90,7 +90,7 @@ export default function CoursesScreen({ navigation }) {
                 <View style={styles.cardBody}>
                   <Text style={styles.courseTitle}>{course.title}</Text>
                   <Text style={styles.students}>
-                    👥 {course.students || 0} estudiantes
+                  {course.students || 0} estudiantes
                   </Text>
                   <Text
                     style={styles.description}

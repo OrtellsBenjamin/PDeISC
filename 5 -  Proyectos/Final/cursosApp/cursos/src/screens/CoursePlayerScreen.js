@@ -32,7 +32,7 @@ export default function CoursePlayerScreen({ route, navigation }) {
   const LESSONS_URL = `${API_BASE}/courses/${course.id}/lessons`;
   const PROGRESS_URL = `${API_BASE}/enrollments/${course.id}/progress`;
 
-  // 🔹 Cargar lecciones y progreso en paralelo
+  //Cargar lecciones y progreso en paralelo
   useEffect(() => {
     const fetchLessonsAndProgress = async () => {
       setLoading(true);
@@ -44,12 +44,12 @@ export default function CoursePlayerScreen({ route, navigation }) {
           }),
         ]);
 
-        // 📘 Procesar lecciones
+        //Procesar lecciones
         const dataLessons = await resLessons.json();
         const arr = Array.isArray(dataLessons) ? dataLessons : [];
         setLessons(arr);
 
-        // 📊 Procesar progreso guardado
+        //Procesar progreso guardado
         const enrollData = await resEnroll.json();
         const enrollment = Array.isArray(enrollData)
           ? enrollData.find((e) => e.course_id === course.id)
@@ -58,7 +58,7 @@ export default function CoursePlayerScreen({ route, navigation }) {
         const savedProgress = enrollment?.progress || 0;
         setProgress(savedProgress);
 
-        // 🧮 Calcular índice inicial según progreso (%)
+        //Calcular índice inicial según progreso (%)
         if (arr.length > 0 && savedProgress > 0) {
           let lastIndex = Math.floor((savedProgress / 100) * arr.length);
           if (lastIndex > 0 && lastIndex < arr.length) lastIndex -= 1;
@@ -78,7 +78,7 @@ export default function CoursePlayerScreen({ route, navigation }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 🔁 Actualizar progreso en DB
+  //Actualizar progreso en DB
   const updateProgress = async (pct) => {
     try {
       await fetch(PROGRESS_URL, {
@@ -110,7 +110,7 @@ export default function CoursePlayerScreen({ route, navigation }) {
       return;
     }
 
-    // Última lección → marcar 100 %
+    //Última lección → marcar 100 %
     setProgress(100);
     await updateProgress(100);
     Alert.alert("Curso finalizado", "Has completado todas las lecciones.");
@@ -136,9 +136,8 @@ export default function CoursePlayerScreen({ route, navigation }) {
 
   const currentLesson = lessons[currentIndex];
 
-  // ====================================================
-  // 📱 COMPONENTE: SIDEBAR MÓVIL
-  // ====================================================
+  //componente sidebar móvil
+
   const MobileSidebar = () => (
     <View style={styles.mobileSidebar}>
       <Text style={styles.sidebarTitle}>Temario</Text>
@@ -179,9 +178,7 @@ export default function CoursePlayerScreen({ route, navigation }) {
     </View>
   );
 
-  // ====================================================
-  // 💻 COMPONENTE: SIDEBAR ESCRITORIO
-  // ====================================================
+//componente sidebar escritorio
   const DesktopSidebar = () => (
     <ScrollView
       style={styles.desktopSidebar}
@@ -225,9 +222,7 @@ export default function CoursePlayerScreen({ route, navigation }) {
     </ScrollView>
   );
 
-  // ====================================================
-  // 📱 LAYOUT MÓVIL
-  // ====================================================
+  //Layout movil
   const renderMobileLayout = () => (
     <ScrollView
       style={styles.mobileScroll}
@@ -255,9 +250,7 @@ export default function CoursePlayerScreen({ route, navigation }) {
     </ScrollView>
   );
 
-  // ====================================================
-  // 💻 LAYOUT ESCRITORIO
-  // ====================================================
+  //Layout escritorio
   const renderDesktopLayout = () => (
     <View style={styles.desktopLayout}>
       {/* Video izquierda */}
@@ -281,9 +274,7 @@ export default function CoursePlayerScreen({ route, navigation }) {
     </View>
   );
 
-  // ====================================================
-  // 🧩 RENDER PRINCIPAL
-  // ====================================================
+ 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
@@ -297,9 +288,7 @@ export default function CoursePlayerScreen({ route, navigation }) {
   );
 }
 
-// ====================================================
-// 🎨 ESTILOS
-// ====================================================
+//Estilos
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8FAFB" },
   backBtn: {
@@ -310,9 +299,8 @@ const styles = StyleSheet.create({
   },
   backText: { fontSize: 16, fontWeight: "600", color: "#0B7077", marginLeft: 6 },
 
-  // ===========================
-  // 📱 MOBILE LAYOUT
-  // ===========================
+
+
   mobileScroll: { flex: 1, backgroundColor: "#F8FAFB" },
   mobileVideoContainer: {
     alignItems: "center",
@@ -335,9 +323,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 
-  // ===========================
-  // 💻 DESKTOP LAYOUT
-  // ===========================
+  
   desktopLayout: {
     flex: 1,
     flexDirection: "row",
@@ -364,9 +350,7 @@ const styles = StyleSheet.create({
     maxHeight: "90%",
   },
 
-  // ===========================
-  // 📘 ELEMENTOS TEMARIO
-  // ===========================
+ 
   sidebarTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -395,9 +379,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 
-  // ===========================
-  // 📊 PROGRESO
-  // ===========================
+
+
   progressContainer: {
     width: "100%",
     height: 8,

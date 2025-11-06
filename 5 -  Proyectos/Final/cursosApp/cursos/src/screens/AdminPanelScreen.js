@@ -6,30 +6,37 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { AuthContext } from "../context/AuthContext";
 import Toast from "react-native-toast-message";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import BackButton from "../components/BackButton";
 
 export default function AdminPanelScreen() {
   const { session } = useContext(AuthContext);
   const navigation = useNavigation();
+
   const [courses, setCourses] = useState([]);
   const [teachers, setTeachers] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [loadingTeachers, setLoadingTeachers] = useState(true);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const API_URL = "https://onlearn-api.onrender.com/api";
 
-  //Obtener cursos
+  // Obtener todos los cursos
   const fetchCourses = async () => {
     try {
       const res = await fetch(`${API_URL}/courses`);
       const data = await res.json();
       setCourses(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Error al cargar cursos:", err);
       Toast.show({
         type: "error",
         text1: "Error al cargar cursos",
@@ -40,7 +47,7 @@ export default function AdminPanelScreen() {
     }
   };
 
-  //Obtener profesores pendientes
+  // Obtener profesores pendientes de aprobación
   const fetchTeachers = async () => {
     try {
       const res = await fetch(`${API_URL}/users/pending-teachers`, {
@@ -49,7 +56,6 @@ export default function AdminPanelScreen() {
       const data = await res.json();
       setTeachers(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Error al cargar profesores pendientes:", err);
       Toast.show({
         type: "error",
         text1: "Error al cargar profesores",
@@ -60,12 +66,33 @@ export default function AdminPanelScreen() {
     }
   };
 
+  // Obtener todos los usuarios registrados
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch(`${API_URL}/users`, {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      const data = await res.json();
+      setUsers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      Toast.show({
+        type: "error",
+        text1: "Error al cargar usuarios",
+        text2: err.message,
+      });
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  // Cargar datos al montar el componente
   useEffect(() => {
     fetchCourses();
     fetchTeachers();
+    fetchUsers();
   }, []);
 
-  //Aprobar/Rechazar profesores
+  // Aprobar profesor
   const handleApproveTeacher = async (id) => {
     try {
       const res = await fetch(`${API_URL}/users/approve-teacher/${id}`, {
@@ -73,11 +100,10 @@ export default function AdminPanelScreen() {
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (!res.ok) throw new Error("No se pudo aprobar la solicitud");
-
       Toast.show({
         type: "success",
         text1: "Profesor aprobado",
-        text2: "El usuario ahora puede crear cursos.",
+        text2: "Ahora puede crear cursos.",
       });
       fetchTeachers();
     } catch (e) {
@@ -85,6 +111,7 @@ export default function AdminPanelScreen() {
     }
   };
 
+  // Rechazar profesor
   const handleRejectTeacher = async (id) => {
     try {
       const res = await fetch(`${API_URL}/users/reject-teacher/${id}`, {
@@ -92,7 +119,6 @@ export default function AdminPanelScreen() {
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (!res.ok) throw new Error("No se pudo rechazar la solicitud");
-
       Toast.show({
         type: "info",
         text1: "Solicitud rechazada",
@@ -104,79 +130,81 @@ export default function AdminPanelScreen() {
     }
   };
 
-  // ✅ Aprobar curso
-const handleApproveCourse = async (id) => {
-  try {
-    const res = await fetch(`${API_URL}/courses/${id}/approve`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session?.access_token}`,
-      },
-    });
-
-    const contentType = res.headers.get("content-type");
-    let data;
-    if (contentType && contentType.includes("application/json")) {
-      data = await res.json();
-    } else {
-      const text = await res.text();
-      throw new Error(`Respuesta no válida del servidor: ${text}`);
+  // Aprobar curso
+  const handleApproveCourse = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/courses/${id}/approve`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data?.error || "No se pudo aprobar el curso");
+      Toast.show({
+        type: "success",
+        text1: "Curso publicado",
+        text2: "Ya está visible en la plataforma.",
+      });
+      fetchCourses();
+    } catch (e) {
+      Toast.show({ type: "error", text1: "Error", text2: e.message });
     }
+  };
 
-    if (!res.ok) throw new Error(data?.error || "No se pudo aprobar el curso");
-
-    Toast.show({
-      type: "success",
-      text1: "Curso publicado 🚀",
-      text2: "El curso ya está visible en la plataforma.",
-    });
-
-    fetchCourses();
-  } catch (e) {
-    console.error("❌ Error al aprobar curso:", e);
-    Toast.show({ type: "error", text1: "Error", text2: e.message });
-  }
-};
-
-// ❌ Rechazar curso
-const handleRejectCourse = async (id) => {
-  try {
-    const res = await fetch(`${API_URL}/courses/${id}/reject`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session?.access_token}`,
-      },
-    });
-
-    const contentType = res.headers.get("content-type");
-    let data;
-    if (contentType && contentType.includes("application/json")) {
-      data = await res.json();
-    } else {
-      const text = await res.text();
-      throw new Error(`Respuesta no válida del servidor: ${text}`);
+  // Rechazar curso
+  const handleRejectCourse = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/courses/${id}/reject`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data?.error || "No se pudo rechazar el curso");
+      Toast.show({
+        type: "info",
+        text1: "Curso rechazado",
+        text2: "El curso fue marcado como rechazado.",
+      });
+      fetchCourses();
+    } catch (e) {
+      Toast.show({ type: "error", text1: "Error", text2: e.message });
     }
+  };
 
-    if (!res.ok) throw new Error(data?.error || "No se pudo rechazar el curso");
+  // Mostrar modal de confirmación de eliminación de usuario
+  const confirmDeleteUser = (user) => {
+    setSelectedUser(user);
+    setConfirmVisible(true);
+  };
 
-    Toast.show({
-      type: "info",
-      text1: "Curso rechazado ❌",
-      text2: "El curso fue marcado como rechazado.",
-    });
+  // Eliminar usuario confirmado
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    try {
+      const res = await fetch(`${API_URL}/users/${selectedUser.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (!res.ok) throw new Error("No se pudo eliminar el usuario");
+      Toast.show({ type: "success", text1: "Usuario eliminado correctamente" });
+      fetchUsers();
+    } catch (e) {
+      Toast.show({ type: "error", text1: "Error", text2: e.message });
+    } finally {
+      setConfirmVisible(false);
+      setSelectedUser(null);
+    }
+  };
 
-    fetchCourses();
-  } catch (e) {
-    console.error("❌ Error al rechazar curso:", e);
-    Toast.show({ type: "error", text1: "Error", text2: e.message });
-  }
-};
-
-
-  // Loader
-  if (loadingCourses || loadingTeachers) {
+  // Mostrar loader mientras se cargan datos
+  if (loadingCourses || loadingTeachers || loadingUsers) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color="#0B7077" />
@@ -185,26 +213,19 @@ const handleRejectCourse = async (id) => {
     );
   }
 
-  //Interfaz principal
   return (
     <ScrollView style={styles.container}>
-      
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.navigate("Home")}
-      >
-        <Ionicons
-          name="arrow-back"
-          size={20}
-          color="#fff"
-          style={{ marginRight: 5 }}
-        />
-        <Text style={styles.backText}>Volver</Text>
-      </TouchableOpacity>
+      <BackButton
+        onPress={() =>
+          navigation.canGoBack()
+            ? navigation.goBack()
+            : navigation.navigate("Home")
+        }
+      />
 
       <Text style={styles.title}>Panel de Administración</Text>
 
-      {/*Solicitudes de profesor */}
+      {/* Sección de solicitudes de profesor */}
       <Text style={styles.sectionTitle}>Solicitudes de profesor</Text>
       {teachers.length === 0 ? (
         <Text style={styles.empty}>No hay solicitudes pendientes.</Text>
@@ -231,7 +252,7 @@ const handleRejectCourse = async (id) => {
         ))
       )}
 
-      {/*Cursos pendientes */}
+      {/* Sección de cursos pendientes */}
       <Text style={styles.sectionTitle}>Cursos pendientes</Text>
       {courses.filter((c) => c.status === "pending").length === 0 ? (
         <Text style={styles.empty}>No hay cursos pendientes.</Text>
@@ -246,7 +267,6 @@ const handleRejectCourse = async (id) => {
               </Text>
               <Text style={styles.desc}>Precio: ${course.price}</Text>
               <Text style={styles.status}>Estado: {course.status}</Text>
-
               <View style={styles.buttons}>
                 <TouchableOpacity
                   style={[styles.button, { backgroundColor: "#0B7077" }]}
@@ -264,24 +284,63 @@ const handleRejectCourse = async (id) => {
             </View>
           ))
       )}
+
+      {/* Sección de gestión de usuarios */}
+      <Text style={styles.sectionTitle}>Gestión de usuarios</Text>
+      {users.length === 0 ? (
+        <Text style={styles.empty}>No hay usuarios registrados.</Text>
+      ) : (
+        users.map((u) => (
+          <View key={u.id} style={styles.card}>
+            <Text style={styles.name}>{u.full_name || "Sin nombre"}</Text>
+            <Text style={styles.desc}>Rol: {u.role}</Text>
+            <TouchableOpacity
+              style={[
+                styles.button,
+                { backgroundColor: "#E63946", marginTop: 10 },
+              ]}
+              onPress={() => confirmDeleteUser(u)}
+            >
+              <Text style={styles.buttonText}>Eliminar usuario</Text>
+            </TouchableOpacity>
+          </View>
+        ))
+      )}
+
+      {/* Modal de confirmación de eliminación */}
+      <Modal visible={confirmVisible} transparent animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.modal}>
+            <Text style={styles.modalTitle}>Confirmar eliminación</Text>
+            <Text style={styles.modalText}>
+              ¿Seguro que querés eliminar{"\n"}“
+              {selectedUser?.full_name || "este usuario"}”?
+            </Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#E63946" }]}
+                onPress={handleDeleteUser}
+              >
+                <Text style={styles.modalButtonText}>Sí, eliminar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#0B7077" }]}
+                onPress={() => setConfirmVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
 
-// 🎨 Estilos
+// Estilos
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F2F6F5", padding: 20 },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    backgroundColor: "#0B7077",
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    marginBottom: 15,
-  },
-  backText: { color: "#fff", fontWeight: "600", fontSize: 15 },
   title: {
     fontSize: 26,
     fontWeight: "bold",
@@ -324,4 +383,42 @@ const styles = StyleSheet.create({
     backgroundColor: "#D2E6E4",
   },
   loaderText: { marginTop: 10, color: "#0B7077", fontWeight: "600" },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modal: {
+    backgroundColor: "#E9F6F5",
+    borderRadius: 12,
+    padding: 20,
+    width: "85%",
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#0B7077",
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 15,
+    textAlign: "center",
+    color: "#0B7077",
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+  },
+  modalButton: {
+    flex: 1,
+    marginHorizontal: 5,
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  modalButtonText: { color: "#fff", fontWeight: "700", fontSize: 15 },
 });

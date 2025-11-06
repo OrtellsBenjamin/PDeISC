@@ -25,10 +25,7 @@ export default function HeroSection() {
         },
       ]}
     >
-     
       <View style={styles.orangeShape} />
-
-
       <View
         style={[
           styles.left,
@@ -38,10 +35,7 @@ export default function HeroSection() {
           },
         ]}
       >
-   
         <Text style={styles.tagline}>Nunca dejes de aprender</Text>
-
-     
         <Text
           style={[
             styles.title,
@@ -53,8 +47,6 @@ export default function HeroSection() {
         >
           Desarrollá tus habilidades{"\n"}con cursos en línea en
         </Text>
-
-        
         <Text
           style={[
             styles.brand,
@@ -66,18 +58,13 @@ export default function HeroSection() {
         >
           OnLearn
         </Text>
-
-       
         <TouchableOpacity
           style={styles.exploreBtn}
           onPress={() => navigation.navigate("AllCourses")} 
         >
           <Text style={styles.exploreText}>EXPLORAR CURSOS</Text>
         </TouchableOpacity>
-
       </View>
-
-
       <View
         style={[
           styles.right,
@@ -101,8 +88,6 @@ export default function HeroSection() {
               },
             ]}
           />
-
-         
           <View style={styles.floatingCard}>
             <Text style={styles.floatingText}>250k{"\n"}Estudiantes activos</Text>
           </View>
@@ -120,7 +105,6 @@ const styles = StyleSheet.create({
     overflow: "hidden", 
     position: "relative",
   },
-
 
   orangeShape: {
     position: "absolute",

@@ -6,7 +6,7 @@ import { Platform } from 'react-native';
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-// 🔹 Crear un storage adapter que funcione correctamente en web
+//Crear un storage adapter que funcione correctamente en web
 const createStorageAdapter = () => {
   if (Platform.OS === 'web') {
     // En web, usar localStorage directamente

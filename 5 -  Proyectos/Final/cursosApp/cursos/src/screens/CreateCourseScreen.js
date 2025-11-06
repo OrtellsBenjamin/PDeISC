@@ -1,3 +1,4 @@
+
 import React, { useContext, useState, useEffect } from "react";
 import {
   View,
@@ -15,20 +16,28 @@ import * as ImagePicker from "expo-image-picker";
 import Toast from "react-native-toast-message";
 import { AuthContext } from "../context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+// Pantalla para crear o editar cursos con soporte para módulos
 export default function CreateCourseScreen({ route, navigation }) {
+  // Obtener sesión y perfil del contexto de autenticación
   const { session, profile } = useContext(AuthContext);
+  
   const { mode, course } = route.params || {};
+
   const { width } = useWindowDimensions();
 
+  // URLs base de la API
   const API_BASE = "https://onlearn-api.onrender.com/api";
   const COURSES_URL = `${API_BASE}/courses`;
   const UPLOAD_FILE_URL = `${API_BASE}/upload`;
 
+  // Estados del formulario
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState(course?.title || "");
   const [description, setDescription] = useState(course?.description || "");
   const [price, setPrice] = useState(course?.price?.toString() || "");
+  const [priceKey, setPriceKey] = useState(0);
   const [category_id, setCategoryId] = useState(course?.category_id || "");
   const [image_url, setImageUrl] = useState(course?.image_url || "");
   const [imageFile, setImageFile] = useState(null);
@@ -36,7 +45,7 @@ export default function CreateCourseScreen({ route, navigation }) {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
 
-  // Muestra un Toast adaptado al ancho de pantalla (celular o desktop)
+  // Función para mostrar Toast adaptado al tamaño de pantalla
   const showToast = (type, text1, text2 = "") => {
     const isMobile = width < 700;
     Toast.show({
@@ -57,12 +66,13 @@ export default function CreateCourseScreen({ route, navigation }) {
     });
   };
 
-  // Detecta el tipo MIME del archivo según su extensión
+  // Determinar tipo MIME según extensión del archivo
   const guessMimeFromUri = (uri, kind) => {
     const lower = (uri || "").toLowerCase();
     if (kind === "image") {
       if (lower.endsWith(".png")) return "image/png";
-      if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+      if (lower.endsWith(".jpg") || lower.endsWith(".jpeg"))
+        return "image/jpeg";
       if (lower.endsWith(".webp")) return "image/webp";
       return "image/jpeg";
     }
@@ -72,7 +82,7 @@ export default function CreateCourseScreen({ route, navigation }) {
     return "video/mp4";
   };
 
-  // Extrae el nombre del archivo desde su URI
+  // Extraer nombre del archivo desde su URI
   const fileNameFromUri = (uri, fallback) => {
     try {
       const parts = uri.split("/");
@@ -83,7 +93,7 @@ export default function CreateCourseScreen({ route, navigation }) {
     }
   };
 
-  // Determina si el archivo necesita subirse (local o blob)
+  // Verificar si un archivo necesita ser subido al servidor
   const needsUpload = (uri) => {
     if (!uri) return false;
     return (
@@ -94,7 +104,7 @@ export default function CreateCourseScreen({ route, navigation }) {
     );
   };
 
-  // Convierte una URI blob/data a objeto File (solo web)
+  // Convertir URI blob o data a objeto File para web
   const uriToFile = async (uri, fileName, mimeType) => {
     try {
       if (uri.startsWith("blob:") || uri.startsWith("data:")) {
@@ -108,17 +118,21 @@ export default function CreateCourseScreen({ route, navigation }) {
     }
   };
 
-  // Sube un archivo (imagen o video) al servidor, compatible con celular y web
+  // Subir archivo al servidor y retornar URL pública
   const uploadFile = async (uri, kind) => {
     if (!uri || !needsUpload(uri)) {
       return uri;
     }
 
     const form = new FormData();
-    const name = fileNameFromUri(uri, kind === "image" ? "portada.jpg" : "video.mp4");
+    const name = fileNameFromUri(
+      uri,
+      kind === "image" ? "portada.jpg" : "video.mp4"
+    );
     const type = guessMimeFromUri(uri, kind);
 
     try {
+      // En web convertir blob a File
       if (Platform.OS === "web") {
         const file = await uriToFile(uri, name, type);
         if (!file) {
@@ -126,6 +140,7 @@ export default function CreateCourseScreen({ route, navigation }) {
         }
         form.append("file", file);
       } else {
+        // En móvil usar URI directamente
         form.append("file", {
           uri,
           name,
@@ -138,7 +153,9 @@ export default function CreateCourseScreen({ route, navigation }) {
       const res = await fetch(UPLOAD_FILE_URL, {
         method: "POST",
         headers: {
-          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          ...(session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {}),
         },
         body: form,
       });
@@ -164,7 +181,7 @@ export default function CreateCourseScreen({ route, navigation }) {
     }
   };
 
-  // Carga de categorías desde el backend
+  // Cargar categorías disponibles al montar el componente
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -178,7 +195,7 @@ export default function CreateCourseScreen({ route, navigation }) {
     fetchCategories();
   }, []);
 
-  // Selector de imagen para la portada del curso
+  // Abrir selector de imágenes del dispositivo
   const handleImagePicker = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -197,7 +214,7 @@ export default function CreateCourseScreen({ route, navigation }) {
     }
   };
 
-  // Maneja cambios en el título del curso con validación
+  // Validar y actualizar título con límite de 80 caracteres
   const handleTitleChange = (value) => {
     if (value.length > 80) {
       showToast("error", "Título demasiado largo", "Máximo 80 caracteres.");
@@ -206,43 +223,88 @@ export default function CreateCourseScreen({ route, navigation }) {
     setTitle(value);
   };
 
-  // Maneja cambios en la descripción del curso con validación
+  // Validar y actualizar descripción con límite de 500 caracteres
   const handleDescriptionChange = (value) => {
     if (value.length > 500) {
-      showToast("error", "Descripción demasiado larga", "Máximo 500 caracteres.");
+      showToast(
+        "error",
+        "Descripción demasiado larga",
+        "Máximo 500 caracteres."
+      );
       return;
     }
     setDescription(value);
   };
 
-  // Maneja y valida el campo de precio
+  // Validar y actualizar precio con restricciones numéricas
   const handlePriceChange = (value) => {
-    const validFormat = /^[0-9]*\.?[0-9]*$/;
-
-    if (value === "" || validFormat.test(value)) {
-      const numericValue = parseFloat(value);
-      if (numericValue < 0) {
-        showToast("error", "Precio inválido", "No se permiten valores negativos.");
-        return;
-      }
-      if (numericValue > 600) {
-        showToast("error", "Precio demasiado alto", "Máximo permitido: 600 USD.");
-        return;
-      }
-      setPrice(value);
-    } else {
-      showToast("error", "Entrada inválida", "Solo se permiten números y punto decimal.");
+    if (value === "") {
+      setPrice("");
+      return;
     }
+
+    const validFormat = /^[0-9]*\.?[0-9]*$/;
+    if (!validFormat.test(value)) {
+      showToast(
+        "error",
+        "Entrada inválida",
+        "Solo se permiten números y punto decimal."
+      );
+      setPriceKey(prev => prev + 1);
+      return;
+    }
+
+    if (value === "." || value.endsWith(".")) {
+      setPrice(value);
+      return;
+    }
+
+    const numericValue = parseFloat(value);
+
+    if (isNaN(numericValue)) {
+      setPriceKey(prev => prev + 1);
+      return;
+    }
+
+    if (numericValue < 0) {
+      showToast(
+        "error",
+        "Precio inválido",
+        "No se permiten valores negativos."
+      );
+      setPriceKey(prev => prev + 1);
+      return;
+    }
+
+    if (numericValue > 600) {
+      showToast(
+        "error",
+        "Precio demasiado alto",
+        "Máximo permitido: 600 USD."
+      );
+      setPriceKey(prev => prev + 1);
+      return;
+    }
+
+    setPrice(value);
   };
 
-  // Avanza al paso de módulos, validando los datos básicos del curso
+  // Validar datos del paso 1 y avanzar al paso 2
   const handleNextStep = () => {
     if (!title || !description || !price || !category_id) {
-      showToast("error", "Campos incompletos", "Completá los datos del curso antes de continuar.");
+      showToast(
+        "error",
+        "Campos incompletos",
+        "Completá los datos del curso antes de continuar."
+      );
       return;
     }
     if (!imageFile && !image_url) {
-      showToast("error", "Portada obligatoria", "Debés seleccionar una imagen de portada.");
+      showToast(
+        "error",
+        "Portada obligatoria",
+        "Debés seleccionar una imagen de portada."
+      );
       return;
     }
     if (isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
@@ -256,15 +318,21 @@ export default function CreateCourseScreen({ route, navigation }) {
     setStep(2);
   };
 
-  // Agrega un módulo vacío a la lista
+  // Agregar módulo vacío a la lista
   const addModule = () => {
     setModules((prev) => [
       ...prev,
-      { title: "", description: "", video_url: "", video_file: null, order_index: prev.length + 1 },
+      {
+        title: "",
+        description: "",
+        video_url: "",
+        video_file: null,
+        order_index: prev.length + 1,
+      },
     ]);
   };
 
-  // Permite seleccionar un video para un módulo
+  // Abrir selector de video para un módulo específico
   const pickModuleVideo = async (index) => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -285,30 +353,47 @@ export default function CreateCourseScreen({ route, navigation }) {
     }
   };
 
-  // Actualiza los datos de un módulo con validación de longitud
+  // Actualizar campo de un módulo con validaciones
   const updateModule = (index, field, value) => {
     const updated = [...modules];
     if (field === "title" && value.length > 80) {
-      showToast("error", "Título de módulo demasiado largo", "Máximo 80 caracteres.");
+      showToast(
+        "error",
+        "Título de módulo demasiado largo",
+        "Máximo 80 caracteres."
+      );
       return;
     }
     if (field === "description" && value.length > 300) {
-      showToast("error", "Descripción de módulo demasiado larga", "Máximo 300 caracteres.");
+      showToast(
+        "error",
+        "Descripción de módulo demasiado larga",
+        "Máximo 300 caracteres."
+      );
       return;
     }
     updated[index][field] = value;
     setModules(updated);
   };
 
-  // Envía el curso al backend (creación o edición)
+  // Enviar curso al servidor con validaciones completas
   const handleSubmitCourse = async () => {
     try {
+      // Validar campos básicos
       if (!title || !description || !price || !category_id) {
-        showToast("error", "Campos incompletos", "Completá todos los datos antes de continuar.");
+        showToast(
+          "error",
+          "Campos incompletos",
+          "Completá todos los datos antes de continuar."
+        );
         return;
       }
       if (!imageFile && !image_url) {
-        showToast("error", "Portada obligatoria", "Debés seleccionar una imagen de portada.");
+        showToast(
+          "error",
+          "Portada obligatoria",
+          "Debés seleccionar una imagen de portada."
+        );
         return;
       }
       if (isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
@@ -320,25 +405,37 @@ export default function CreateCourseScreen({ route, navigation }) {
         return;
       }
 
+      // Validar módulos solo en modo creación
       if (mode !== "edit") {
         if (modules.length < 1) {
-          showToast("error", "Mínimo un módulo", "El curso debe tener al menos un módulo.");
+          showToast(
+            "error",
+            "Mínimo un módulo",
+            "El curso debe tener al menos un módulo."
+          );
           return;
         }
 
         const invalidModule =
           modules.some((m) => !m.title || m.title.trim().length < 3) ||
-          modules.some((m) => !m.description || m.description.trim().length < 3) ||
+          modules.some(
+            (m) => !m.description || m.description.trim().length < 3
+          ) ||
           modules.some((m) => !m.video_file && !m.video_url);
 
         if (invalidModule) {
-          showToast("error", "Módulos incompletos", "Cada módulo debe tener título, descripción y video.");
+          showToast(
+            "error",
+            "Módulos incompletos",
+            "Cada módulo debe tener título, descripción y video."
+          );
           return;
         }
       }
 
       setLoading(true);
 
+      // Subir imagen de portada si es necesario
       let finalImageUrl = image_url;
       const imageToUpload = imageFile || image_url;
 
@@ -349,9 +446,12 @@ export default function CreateCourseScreen({ route, navigation }) {
       }
 
       if (!finalImageUrl || needsUpload(finalImageUrl)) {
-        throw new Error("No se pudo obtener una URL pública para la portada del curso.");
+        throw new Error(
+          "No se pudo obtener una URL pública para la portada del curso."
+        );
       }
 
+      // Preparar payload del curso
       const payload = {
         title,
         description,
@@ -361,8 +461,10 @@ export default function CreateCourseScreen({ route, navigation }) {
         owner: profile?.id,
       };
 
+      // Crear o actualizar curso según el modo
       const method = mode === "edit" ? "PATCH" : "POST";
-      const url = mode === "edit" ? `${COURSES_URL}/${course?.id}` : COURSES_URL;
+      const url =
+        mode === "edit" ? `${COURSES_URL}/${course?.id}` : COURSES_URL;
 
       const res = await fetch(url, {
         method,
@@ -376,25 +478,33 @@ export default function CreateCourseScreen({ route, navigation }) {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data?.error || data?.message || "Error al guardar el curso");
+        throw new Error(
+          data?.error || data?.message || "Error al guardar el curso"
+        );
       }
 
       const savedCourse = data.data || data;
 
-      // Crea las lecciones en caso de que el curso sea nuevo
+      // Crear módulos solo en modo creación
       if (mode !== "edit" && modules.length > 0) {
         for (let i = 0; i < modules.length; i++) {
           const mod = modules[i];
           let videoUrlFinal = mod.video_file || mod.video_url;
 
+          // Subir video del módulo
           if (needsUpload(videoUrlFinal)) {
             videoUrlFinal = await uploadFile(videoUrlFinal, "video");
           }
 
           if (!videoUrlFinal || needsUpload(videoUrlFinal)) {
-            throw new Error(`No se pudo obtener una URL pública para el video del módulo ${i + 1}.`);
+            throw new Error(
+              `No se pudo obtener una URL pública para el video del módulo ${
+                i + 1
+              }.`
+            );
           }
 
+          // Crear lección en el backend
           const lessonPayload = {
             title: mod.title,
             description: mod.description,
@@ -402,18 +512,25 @@ export default function CreateCourseScreen({ route, navigation }) {
             order_index: mod.order_index,
           };
 
-          const lessonRes = await fetch(`${COURSES_URL}/${savedCourse.id}/lessons`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session?.access_token}`,
-            },
-            body: JSON.stringify(lessonPayload),
-          });
+          const lessonRes = await fetch(
+            `${COURSES_URL}/${savedCourse.id}/lessons`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session?.access_token}`,
+              },
+              body: JSON.stringify(lessonPayload),
+            }
+          );
 
           if (!lessonRes.ok) {
             const errData = await lessonRes.json();
-            throw new Error(`Error al crear módulo ${i + 1}: ${errData?.error || "Error desconocido"}`);
+            throw new Error(
+              `Error al crear módulo ${i + 1}: ${
+                errData?.error || "Error desconocido"
+              }`
+            );
           }
         }
       }
@@ -428,13 +545,30 @@ export default function CreateCourseScreen({ route, navigation }) {
 
       navigation.navigate("MyCourses");
     } catch (err) {
-      showToast("error", "Error al guardar", err.message || "Ocurrió un error inesperado");
+      showToast(
+        "error",
+        "Error al guardar",
+        err.message || "Ocurrió un error inesperado"
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // Renderiza el paso 1 del formulario: portada y datos básicos
+  // Manejar navegación hacia atrás
+  const handleBackPress = () => {
+    if (step === 2) {
+      setStep(1);
+    } else {
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.navigate("MyCourses");
+      }
+    }
+  };
+
+  // Renderizar formulario del paso 1: datos básicos
   const renderStep1 = () => (
     <ScrollView style={styles.form}>
       <Text style={styles.label}>Título del curso</Text>
@@ -456,6 +590,7 @@ export default function CreateCourseScreen({ route, navigation }) {
 
       <Text style={styles.label}>Precio (USD)</Text>
       <TextInput
+        key={priceKey}
         style={styles.input}
         placeholder="Ejemplo: 49.99"
         keyboardType="numeric"
@@ -514,7 +649,7 @@ export default function CreateCourseScreen({ route, navigation }) {
     </ScrollView>
   );
 
-  // Renderiza el paso 2: gestión de módulos y subida de videos
+  // Renderizar formulario del paso 2: módulos
   const renderStep2 = () => (
     <ScrollView style={styles.form}>
       <Text style={styles.sectionTitle}>Agregar módulos al curso</Text>
@@ -539,16 +674,24 @@ export default function CreateCourseScreen({ route, navigation }) {
           />
 
           <Text style={styles.moduleLabel}>Video del módulo</Text>
-          <TouchableOpacity style={styles.uploadBtn} onPress={() => pickModuleVideo(index)}>
+          <TouchableOpacity
+            style={styles.uploadBtn}
+            onPress={() => pickModuleVideo(index)}
+          >
             <Ionicons name="cloud-upload-outline" size={20} color="#0B7077" />
             <Text style={styles.uploadBtnText}>Seleccionar video</Text>
           </TouchableOpacity>
-          {(mod.video_file || mod.video_url) ? (
+          {mod.video_file || mod.video_url ? (
             <Text style={styles.fileBadge}>
-              {fileNameFromUri(mod.video_file || mod.video_url, `modulo-${index + 1}.mp4`)}
+              {fileNameFromUri(
+                mod.video_file || mod.video_url,
+                `modulo-${index + 1}.mp4`
+              )}
             </Text>
           ) : (
-            <Text style={{ color: "#666", marginTop: 6 }}>Ningún video seleccionado.</Text>
+            <Text style={{ color: "#666", marginTop: 6 }}>
+              Ningún video seleccionado.
+            </Text>
           )}
         </View>
       ))}
@@ -572,26 +715,49 @@ export default function CreateCourseScreen({ route, navigation }) {
     </ScrollView>
   );
 
-  // Render principal
   return (
-    <View style={styles.container}>
-      <Text style={styles.headerTitle}>
-        {mode === "edit" ? "Editar Curso" : "Crear Curso"}
-      </Text>
-      {step === 1 ? renderStep1() : renderStep2()}
-    </View>
+    <SafeAreaView style={styles.safeContainer} edges={["top", "bottom"]}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 30 }}>
+        <View style={styles.container}>
+          {/* Botón de navegación hacia atrás */}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={handleBackPress}
+          >
+            <Ionicons name="arrow-back" size={24} color="#0B7077" />
+          </TouchableOpacity>
+
+          <Text style={styles.headerTitle}>
+            {mode === "edit" ? "Editar Curso" : "Crear Curso"}
+          </Text>
+
+          {step === 1 ? renderStep1() : renderStep2()}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-// Estilos
 const styles = StyleSheet.create({
+  safeContainer: {
+    flex: 1,
+    backgroundColor: "#F8FAFB",
+  },
   container: { flex: 1, backgroundColor: "#F8FAFB", padding: 20 },
+  backButton: {
+    position: "absolute",
+    left: 20,
+    top: Platform.select({ web: 20, android: 45, ios: 45 }),
+    zIndex: 10,
+    padding: 8,
+  },
   headerTitle: {
     fontSize: 22,
     fontWeight: "bold",
     color: "#0B7077",
     textAlign: "center",
     marginBottom: 16,
+    marginTop: Platform.select({ web: 0, android: 10, ios: 10 }),
   },
   form: { flex: 1 },
   label: {

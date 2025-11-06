@@ -10,13 +10,14 @@ import {
   Image,
   useWindowDimensions,
   ScrollView,
+  Platform,
 } from "react-native";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold } from "@expo-google-fonts/montserrat";
 import { BricolageGrotesque_700Bold } from "@expo-google-fonts/bricolage-grotesque";
-import AppLoading from "expo-app-loading";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigation } from "@react-navigation/native";
 import Toast from "react-native-toast-message";
+import BackButton from "../components/BackButton";
 
 const HOME_ROUTE = "Home";
 
@@ -35,6 +36,7 @@ export default function RegisterScreen() {
   const [pendingRedirect, setPendingRedirect] = useState(false);
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
+  const isMobile = width <= 900;
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
@@ -55,24 +57,6 @@ export default function RegisterScreen() {
       }),
     ]).start();
   }, []);
-
-   if (!fontsLoaded) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#D2E6E4",
-        }}
-      >
-        <Text style={{ color: "#0B7077", fontWeight: "700", fontSize: 16 }}>
-          Cargando fuentes...
-        </Text>
-      </View>
-    );
-  }
-  
 
   const onRegister = async () => {
     if (!name || !email || !password) {
@@ -144,125 +128,135 @@ export default function RegisterScreen() {
     }
   }, [pendingRedirect, session, navigation]);
 
-  const isWide = width > 900;
-
   return (
     <ScrollView
       contentContainerStyle={{ flexGrow: 1 }}
       style={{ backgroundColor: "#D2E6E4" }}
     >
+      <BackButton />
+
       <View style={styles.container}>
-        <View
-          style={[
-            styles.responsiveLayout,
-            { flexDirection: isWide ? "row" : "column" },
-          ]}
-        >
-          {/* 🟢 Formulario */}
-          <Animated.View
+        {!fontsLoaded ? (
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <Text style={{ color: "#0B7077", fontWeight: "700", fontSize: 16 }}>
+              Cargando fuentes...
+            </Text>
+          </View>
+        ) : (
+          <View
             style={[
-              styles.card,
+              styles.responsiveLayout,
               {
-                opacity: fadeAnim,
-                transform: [{ scale: scaleAnim }],
-                width: isWide ? 400 : "90%",
+                flexDirection: isMobile ? "row" : "row",
+                alignItems: "center",
+                justifyContent: "center",
               },
             ]}
           >
-            <Text style={styles.title}>Crear cuenta</Text>
-            <Text style={styles.subtitle}>Unite a Onlearn</Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Nombre completo"
-              value={name}
-              onChangeText={setName}
-              placeholderTextColor="#888"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Correo electrónico"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              placeholderTextColor="#888"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Contraseña"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholderTextColor="#888"
-            />
-
-            {/* 🔹 Selector de rol */}
-            <View style={styles.roleContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.roleButton,
-                  role === "client" && styles.roleButtonActive,
-                ]}
-                onPress={() => setRole("client")}
-              >
-                <Text
-                  style={[
-                    styles.roleText,
-                    role === "client" && styles.roleTextActive,
-                  ]}
-                >
-                  Estudiante
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.roleButton,
-                  role === "pending_instructor" && styles.roleButtonActive,
-                ]}
-                onPress={() => setRole("pending_instructor")}
-              >
-                <Text
-                  style={[
-                    styles.roleText,
-                    role === "pending_instructor" && styles.roleTextActive,
-                  ]}
-                >
-                  Profesor
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity style={styles.loginButton} onPress={onRegister}>
-              <Text style={styles.loginText}>Crear cuenta</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Login")}
-              activeOpacity={0.7}
+            <Animated.View
+              style={[
+                styles.card,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ scale: scaleAnim }],
+                  width: isMobile ? "90%" : 400,
+                  marginBottom: isMobile ? 30 : 0,
+                },
+              ]}
             >
-              <Text style={styles.linkText}>
-                ¿Ya tenés cuenta?{" "}
-                <Text style={styles.highlight}>Iniciá sesión</Text>
-              </Text>
-            </TouchableOpacity>
-          </Animated.View>
+              <Text style={styles.title}>Crear cuenta</Text>
+              <Text style={styles.subtitle}>Unite a Onlearn</Text>
 
-          {/* 🟣 Imagen ilustrativa */}
-          <Image
-            source={require("../../assets/Teacher.png")}
-            style={[
-              styles.sideImage,
-              {
-                width: isWide ? 420 : 280,
-                height: isWide ? 420 : 240,
-                marginTop: isWide ? 0 : 40,
-                marginBottom: isWide ? 0 : 40,
-              },
-            ]}
-            resizeMode="contain"
-          />
-        </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Nombre completo"
+                value={name}
+                onChangeText={setName}
+                placeholderTextColor="#888"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Correo electrónico"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                placeholderTextColor="#888"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Contraseña"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                placeholderTextColor="#888"
+              />
+
+              {/* Selector de rol */}
+              <View style={styles.roleContainer}>
+                <TouchableOpacity
+                  style={[styles.roleButton, role === "client" && styles.roleButtonActive]}
+                  onPress={() => setRole("client")}
+                >
+                  <Text
+                    style={[styles.roleText, role === "client" && styles.roleTextActive]}
+                  >
+                    Estudiante
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.roleButton,
+                    role === "pending_instructor" && styles.roleButtonActive,
+                  ]}
+                  onPress={() => setRole("pending_instructor")}
+                >
+                  <Text
+                    style={[
+                      styles.roleText,
+                      role === "pending_instructor" && styles.roleTextActive,
+                    ]}
+                  >
+                    Profesor
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={styles.loginButton}
+                onPress={onRegister}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.loginText}>Crear cuenta</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Login")}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.linkText}>
+                  ¿Ya tenés cuenta? <Text style={styles.highlight}>Iniciá sesión</Text>
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <View style={{ alignItems: "center", justifyContent: "center" }}>
+              <Image
+                source={require("../../assets/Teacher.png")}
+                style={[
+                  styles.sideImage,
+                  {
+                    width: isMobile ? 280 : 420,
+                    height: isMobile ? 240 : 420,
+                    marginTop: isMobile ? 0 : 0,
+                    marginBottom: isMobile ? 40 : 0,
+                  },
+                ]}
+                resizeMode="contain"
+              />
+            </View>
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -285,27 +279,27 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 18,
-    padding: 28,
+    borderRadius: 20,
+    paddingVertical: 40,
+    paddingHorizontal: 50,
     alignItems: "center",
-    elevation: 6,
+    elevation: 8,
     shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
-    maxWidth: 420,
   },
   sideImage: { opacity: 0.95 },
   title: {
-    fontSize: 28,
+    fontSize: Platform.select({ web: 28, default: 24 }),
     color: "#0B7077",
     marginBottom: 6,
     fontFamily: "BricolageGrotesque_700Bold",
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 15,
-    color: "#555",
+    fontSize: 16,
+    color: "#444",
     marginBottom: 25,
     fontFamily: "Montserrat_400Regular",
     textAlign: "center",
@@ -313,14 +307,15 @@ const styles = StyleSheet.create({
   input: {
     width: "100%",
     backgroundColor: "#F2F6F5",
-    borderWidth: 1.4,
+    borderWidth: 1.5,
     borderColor: "#D2E6E4",
     paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderRadius: 8,
+    paddingHorizontal: 16,
+    borderRadius: 10,
     fontSize: 15,
-    marginBottom: 14,
     fontFamily: "Montserrat_400Regular",
+    marginBottom: 15,
+    color: "#333",
   },
   roleContainer: {
     flexDirection: "row",
@@ -351,9 +346,10 @@ const styles = StyleSheet.create({
   loginButton: {
     width: "100%",
     backgroundColor: "#0B7077",
-    paddingVertical: 13,
-    borderRadius: 8,
+    paddingVertical: 14,
+    borderRadius: 10,
     alignItems: "center",
+    justifyContent: "center",
     marginTop: 6,
   },
   loginText: {
@@ -362,9 +358,10 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_700Bold",
   },
   linkText: {
-    marginTop: 20,
+    marginTop: 18,
     color: "#555",
     fontSize: 14,
+    textAlign: "center",
     fontFamily: "BricolageGrotesque_700Bold",
   },
   highlight: {

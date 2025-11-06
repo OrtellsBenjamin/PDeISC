@@ -1,5 +1,5 @@
-import React, { useRef } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import React, { useRef, useState } from "react";
+import { ScrollView, StyleSheet, View, Platform } from "react-native";
 import HeroSection from "../components/HeroSection";
 import CoursesSection from "../components/CoursesSection";
 import CategoriesSection from "../components/CategoriesSection";
@@ -9,44 +9,38 @@ import Header from "../components/Header";
 
 export default function HomeScreen() {
   const scrollViewRef = useRef(null);
-  const cursosRef = useRef(null);
-  const categoriasRef = useRef(null);
-  const contactoRef = useRef(null);
+  const [positions, setPositions] = useState({
+    cursos: 0,
+    categorias: 0,
+    contacto: 0,
+  });
 
+  // Guarda las posiciones Y de cada sección
+  const handleLayout = (section) => (event) => {
+    const { y } = event.nativeEvent.layout;
+    setPositions((prev) => ({ ...prev, [section]: y }));
+  };
 
   const scrollToSection = (section) => {
     const scrollView = scrollViewRef.current;
     if (!scrollView) return;
 
-    const scrollToRef = (ref) => {
-      if (!ref?.current) return;
-
-      const innerNode = scrollView.getInnerViewNode
-        ? scrollView.getInnerViewNode()
-        : scrollView;
-
-
-      ref.current.measureLayout(
-        innerNode,
-        (x, y) => scrollView.scrollTo({ y, animated: true }),
-        (err) => console.warn("Error al medir sección:", err)
-      );
-    };
-
-    switch (section) {
-      case "cursos":
-        scrollToRef(cursosRef);
-        break;
-      case "categorias":
-        scrollToRef(categoriasRef);
-        break;
-      case "contacto":
-        scrollToRef(contactoRef);
-        break;
-      default:
-        scrollView.scrollTo({ y: 0, animated: true });
-        break;
+    // ✅ Web (usa scrollIntoView con suavidad nativa del navegador)
+    if (Platform.OS === "web") {
+      const element = document.getElementById(section);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
     }
+
+    // ✅ Nativo (usa scrollTo nativo fluido sin lag)
+    let targetY = 0;
+    if (section === "cursos") targetY = positions.cursos;
+    else if (section === "categorias") targetY = positions.categorias;
+    else if (section === "contacto") targetY = positions.contacto;
+
+    scrollView.scrollTo({ y: targetY, animated: true });
   };
 
   return (
@@ -56,25 +50,24 @@ export default function HomeScreen() {
       <ScrollView
         ref={scrollViewRef}
         style={styles.container}
-        contentContainerStyle={styles.scrollContent} 
+        contentContainerStyle={styles.scrollContent}
       >
         <HeroSection />
 
-     
-        <View ref={cursosRef} collapsable={false}>
+        {/* 📚 Cursos */}
+        <View onLayout={handleLayout("cursos")} id="cursos">
           <CoursesSection />
         </View>
 
-       
-        <View ref={categoriasRef} collapsable={false}>
+        {/* 🗂️ Categorías */}
+        <View onLayout={handleLayout("categorias")} id="categorias">
           <CategoriesSection />
         </View>
 
-    
         <InfoSection />
 
-   
-        <View ref={contactoRef} collapsable={false}>
+        {/* 📞 Contacto */}
+        <View onLayout={handleLayout("contacto")} id="contacto">
           <FooterSection />
         </View>
       </ScrollView>
@@ -85,11 +78,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#D2E6E4", 
+    backgroundColor: "#D2E6E4",
   },
   scrollContent: {
-    paddingBottom: 0, 
+    paddingBottom: 0,
     marginBottom: 0,
-    backgroundColor: "#D2E6E4", 
+    backgroundColor: "#D2E6E4",
   },
 });

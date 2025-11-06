@@ -96,65 +96,49 @@ export const approveCourse = async (req, res) => {
   }
 };
 
-
+//Rechazar curso (admin vuelve a 'draft')
  
-// Rechazar curso 
 export const rejectCourse = async (req, res) => {
   const { id } = req.params;
   try {
-    // Primero eliminamos las lecciones e inscripciones asociadas
-    await supabaseAdmin.from("course_lessons").delete().eq("course_id", id);
-    await supabaseAdmin.from("enrollments").delete().eq("course_id", id);
-
-    // Luego eliminamos el curso
-    const { error: delErr } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from("courses")
-      .delete()
-      .eq("id", id);
+      .update({ status: "draft" })
+      .eq("id", id)
+      .select("*")
+      .single();
 
-    if (delErr) throw delErr;
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: "Curso no encontrado." });
 
-    res.json({ message: "Curso rechazado y eliminado correctamente." });
+    res.json({ message: "Curso rechazado y enviado a borrador.", data });
   } catch (err) {
     console.error("Error al rechazar curso:", err.message);
     res.status(500).json({ error: err.message });
   }
 };
 
-
 // Eliminar curso (admin o instructor dueño)
- 
-export const deleteCourse = async (req, res) => {
+ export const deleteCourse = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = req.auth?.user;
-    const profile = req.auth?.profile;
+    const user = req.user;
 
-    const { data: course, error: readErr } = await supabaseAdmin
-      .from("courses")
-      .select("id, owner")
-      .eq("id", id)
-      .single();
+    const course = await prisma.courses.findUnique({ where: { id } });
+    if (!course) return res.status(404).json({ error: "Curso no encontrado" });
 
-    if (readErr || !course)
-      return res.status(404).json({ error: "Curso no encontrado." });
+    //permitir a admin eliminar cualquier curso
+    if (course.owner !== user.id && user.role !== "admin") {
+      return res.status(403).json({ error: "No autorizado" });
+    }
 
-    if (profile?.role !== "admin" && course.owner !== user?.id)
-      return res.status(403).json({ error: "No tenés permiso para eliminar este curso." });
-
-    // Eliminar lecciones e inscripciones asociadas
-    await supabaseAdmin.from("course_lessons").delete().eq("course_id", id);
-    await supabaseAdmin.from("enrollments").delete().eq("course_id", id);
-
-    const { error: delErr } = await supabaseAdmin.from("courses").delete().eq("id", id);
-    if (delErr) throw delErr;
-
-    res.json({ message: "Curso eliminado correctamente." });
+    await prisma.courses.delete({ where: { id } });
+    res.json({ message: "Curso eliminado correctamente" });
   } catch (err) {
-    console.error("Error al eliminar curso:", err.message);
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 // Obtener lecciones de un curso

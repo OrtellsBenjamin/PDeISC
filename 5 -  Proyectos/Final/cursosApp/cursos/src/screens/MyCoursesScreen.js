@@ -12,14 +12,26 @@ import { AuthContext } from "../context/AuthContext";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Toast from "react-native-toast-message";
 import { Ionicons } from "@expo/vector-icons";
+import BackButton from "../components/BackButton";
+import { Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import EditModuleScreen from "./EditModuleScreen";
+import { Dimensions } from "react-native";
+const { width: screenWidth } = Dimensions.get("window");
+import { Modal } from "react-native";
+
+
 
 export default function MyCoursesScreen() {
   const { session, profile } = useContext(AuthContext);
   const navigation = useNavigation();
   const [enrollments, setEnrollments] = useState([]);
   const [myCreated, setMyCreated] = useState([]);
-  const [allCourses, setAllCourses] = useState([]); // 👈 nuevo estado
+  const [allCourses, setAllCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
 
   const API_BASE = "https://onlearn-api.onrender.com/api";
   const ENROLL_URL = `${API_BASE}/enrollments/me`;
@@ -45,7 +57,6 @@ export default function MyCoursesScreen() {
         fetchCreated = fetch(`${COURSES_URL}?instructor_id=${profile.id}`);
       }
 
-      // 👇 si es admin, también traemos todos los cursos
       let fetchAll = Promise.resolve({ ok: true, json: async () => [] });
       if (profile?.role === "admin") {
         fetchAll = fetch(COURSES_URL);
@@ -108,55 +119,49 @@ export default function MyCoursesScreen() {
     }
   };
 
-  const deleteCourseNow = async (id, title) => {
+  const handleDeleteCourse = (id, title) => {
+    setSelectedCourse({ id, title });
+    setConfirmVisible(true);
+  };
+
+  // 🔧 FUNCIÓN AGREGADA: Eliminar curso
+  const deleteCourseNow = async () => {
+    if (!selectedCourse?.id) return;
+    
     try {
-      const res = await fetch(`${COURSES_URL}/${id}`, {
+      const res = await fetch(`${API_BASE}/courses/${selectedCourse.id}`, {
         method: "DELETE",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${session?.access_token}`,
         },
       });
 
-      const text = await res.text();
-      if (!res.ok) throw new Error(`Error ${res.status}: ${text}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "No se pudo eliminar el curso");
+      }
 
       Toast.show({
         type: "success",
         text1: "Curso eliminado",
-        text2: `"${title}" fue eliminado correctamente.`,
+        text2: `"${selectedCourse.title}" fue eliminado exitosamente.`,
       });
 
-      setMyCreated((prev) => prev.filter((c) => c.id !== id));
-      setAllCourses((prev) => prev.filter((c) => c.id !== id)); // 👈 también elimina de la lista admin
-    } catch (err) {
-      console.error("❌ Error al eliminar curso:", err);
+      // Cerrar modal y recargar datos
+      setConfirmVisible(false);
+      setSelectedCourse(null);
+      await fetchData();
+
+    } catch (error) {
+      console.error("❌ Error eliminando curso:", error);
       Toast.show({
         type: "error",
-        text1: "Error al eliminar curso",
-        text2: err.message,
+        text1: "Error al eliminar",
+        text2: error.message || "Intentá nuevamente más tarde.",
       });
     }
   };
-
-  const handleDeleteCourse = (id, title) => {
-    Toast.show({
-      type: "info",
-      text1: "Eliminar curso",
-      text2: `¿Seguro que querés eliminar "${title}"? Esta acción no se puede deshacer.`,
-      visibilityTime: 6000,
-      autoHide: false,
-      props: {
-        showConfirm: true,
-        onConfirm: () => {
-          Toast.hide();
-          deleteCourseNow(id, title);
-        },
-        onCancel: () => Toast.hide(),
-      },
-    });
-  };
-
+ 
   const enterCourse = (item) => {
     const finished = (item.progress || 0) >= 100;
     if (!finished) {
@@ -194,20 +199,13 @@ export default function MyCoursesScreen() {
   }
 
   return (
+    <SafeAreaView style={styles.safeContainer} edges={["top", "bottom"]}>
     <ScrollView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Home")}
-          style={styles.backButton}
-        >
-          <Ionicons name="chevron-back" size={22} color="#0B7077" />
-          <Text style={styles.backText}>Volver al inicio</Text>
-        </TouchableOpacity>
+        <BackButton style={styles.backAbsolute} />
         <Text style={styles.headerTitle}>Mis Cursos</Text>
       </View>
 
-      {/* Cursos inscriptos */}
       <Text style={styles.sectionTitle}>Cursos en los que estás inscripto</Text>
       {enrollments.length === 0 ? (
         <Text style={styles.noCoursesText}>
@@ -300,7 +298,7 @@ export default function MyCoursesScreen() {
                         { backgroundColor: "#E86A33" },
                       ]}
                       onPress={() =>
-                        navigation.navigate("EditModules", { course })
+                        navigation.navigate("EditModule", { course })
                       }
                     >
                       <Ionicons name="albums-outline" size={18} color="#fff" />
@@ -332,7 +330,7 @@ export default function MyCoursesScreen() {
         </>
       )}
 
-      {/* 🌍 NUEVA sección para ADMIN */}
+      {/* Todos los cursos (vista admin) */}
       {profile?.role === "admin" && (
         <>
           <Text style={[styles.sectionTitle, { marginTop: 30 }]}>
@@ -344,83 +342,112 @@ export default function MyCoursesScreen() {
               No hay cursos cargados en la plataforma.
             </Text>
           ) : (
-            allCourses.map((course) => (
-              <View key={course.id} style={styles.card}>
-                <Image
-                  source={{
-                    uri:
-                      course.image_url ||
-                      "https://placehold.co/600x400?text=Sin+imagen",
-                  }}
-                  style={styles.image}
-                />
-                <View style={styles.info}>
-                  <Text style={styles.courseTitle}>{course.title}</Text>
-                  <Text numberOfLines={2} style={styles.desc}>
-                    {course.description || "Sin descripción."}
-                  </Text>
-                  <Text style={{ color: "#555", fontSize: 12 }}>
-                    Creador: {course.owner}
-                  </Text>
-                  <Text style={{ color: "#0B7077", fontWeight: "600" }}>
-                    Estado: {course.status}
-                  </Text>
+            allCourses
+              .filter((c) => c.status !== "draft")
+              .map((course) => (
+                <View key={course.id} style={styles.card}>
+                  <Image
+                    source={{
+                      uri:
+                        course.image_url ||
+                        "https://placehold.co/600x400?text=Sin+imagen",
+                    }}
+                    style={styles.image}
+                  />
+                  <View style={styles.info}>
+                    <Text style={styles.courseTitle}>{course.title}</Text>
+                    <Text numberOfLines={2} style={styles.desc}>
+                      {course.description || "Sin descripción."}
+                    </Text>
+                    <Text style={{ color: "#555", fontSize: 12 }}>
+                      Creador: {course.owner}
+                    </Text>
+                    <Text style={{ color: "#0B7077", fontWeight: "600" }}>
+                      Estado: {course.status}
+                    </Text>
 
-                  {/* 👇 Botón eliminar visible para admin */}
-                  <TouchableOpacity
-                    style={[
-                      styles.actionButton,
-                      {
-                        backgroundColor: "#E63946",
-                        alignSelf: "flex-start",
-                        marginTop: 8,
-                      },
-                    ]}
-                    onPress={() =>
-                      handleDeleteCourse(course.id, course.title)
-                    }
-                  >
-                    <Ionicons name="trash-outline" size={18} color="#fff" />
-                    <Text style={styles.actionText}>Eliminar curso</Text>
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.actionButton,
+                        {
+                          backgroundColor: "#E63946",
+                          alignSelf: "flex-start",
+                          marginTop: 8,
+                        },
+                      ]}
+                      onPress={() =>
+                        handleDeleteCourse(course.id, course.title)
+                      }
+                    >
+                      <Ionicons name="trash-outline" size={18} color="#fff" />
+                      <Text style={styles.actionText}>Eliminar curso</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
-            ))
+              ))
           )}
         </>
       )}
+
+      {/* Modal de confirmación */}
+      <Modal visible={confirmVisible} transparent animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.modal}>
+            <Text style={styles.modalTitle}>Confirmar eliminación</Text>
+            <Text style={styles.modalText}>
+              ¿Seguro que querés eliminar{"\n"}"
+              {selectedCourse?.title || "este curso"}"?
+            </Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#E63946" }]}
+                onPress={deleteCourseNow}
+              >
+                <Text style={styles.modalButtonText}>Sí, eliminar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#0B7077" }]}
+                onPress={() => setConfirmVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </ScrollView>
+    </SafeAreaView>
   );
 }
 
-// 🎨 Estilos idénticos a los tuyos
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F2F6F5",
     paddingHorizontal: 20,
     paddingTop: 20,
-  },
+  },  
   header: {
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     marginBottom: 20,
+    position: "relative",
   },
-  backButton: { flexDirection: "row", alignItems: "center" },
-  backText: {
-    color: "#0B7077",
-    fontWeight: "600",
-    fontSize: 15,
-    marginLeft: 4,
+  backAbsolute: {
+    position: "absolute",
+    left: 0,
+    marginTop: Platform.select({ web:0, android:50, ios:50 }),
   },
   headerTitle: {
-    flex: 1,
     textAlign: "center",
     fontSize: 24,
     fontWeight: "bold",
     color: "#0B7077",
-    marginRight: 35,
+    marginLeft: Platform.select({ web:0, android:40, ios:40 }),
+    marginTop: Platform.select({ ios: 55, android: 48 }),
   },
   sectionTitle: {
     fontSize: 20,
@@ -477,6 +504,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
     gap: 10,
   },
+  safeContainer: {
+    flex: 1,
+    backgroundColor: "#F2F6F5",
+  },
   actionButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -490,4 +521,102 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontSize: 13,
   },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modal: {
+    backgroundColor: "#E9F6F5",
+    borderRadius: 12,
+    padding: 20,
+    width: "85%",
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#0B7077",
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 15,
+    textAlign: "center",
+    color: "#0B7077",
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+  },
+  modalButton: {
+    flex: 1,
+    marginHorizontal: 5,
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
+  },
 });
+
+// Ajustes para pantallas pequeñas
+if (screenWidth <= 360) {
+  Object.assign(styles, {
+    container: {
+      ...styles.container,
+      paddingHorizontal: 16,
+    },
+    headerTitle: {
+      ...styles.headerTitle,
+      fontSize: 20,
+      marginTop: Platform.select({ ios: 40, android: 35 }),
+    },
+    sectionTitle: {
+      ...styles.sectionTitle,
+      fontSize: 17,
+      textAlign: "center",
+    },
+    card: {
+      ...styles.card,
+      flexDirection: "column",
+      alignItems: "center",
+      padding: 10,
+    },
+    image: {
+      ...styles.image,
+      width: "100%",
+      height: 160,
+      marginRight: 0,
+      marginBottom: 10,
+    },
+    info: {
+      ...styles.info,
+      alignItems: "center",
+    },
+    courseTitle: {
+      ...styles.courseTitle,
+      fontSize: 15,
+      textAlign: "center",
+    },
+    desc: {
+      ...styles.desc,
+      fontSize: 12,
+      textAlign: "center",
+    },
+    progressText: {
+      ...styles.progressText,
+      fontSize: 12,
+    },
+    backAbsolute: {
+      ...styles.backAbsolute,
+      top: 2, 
+      left: 5,
+    },
+  });
+}

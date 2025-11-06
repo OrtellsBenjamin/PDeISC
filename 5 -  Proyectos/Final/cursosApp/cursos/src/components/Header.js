@@ -7,32 +7,42 @@ import {
   Animated,
   useWindowDimensions,
   Image,
+  Modal,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from "../context/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const ROLE_KEY = "userRole";
 
+// Componente para los ítems del menú de navegación principal
 function NavItem({ label, onPress }) {
   const underline = useRef(new Animated.Value(0)).current;
+
+  // Animación al pasar el mouse
   const handleHoverIn = () =>
     Animated.timing(underline, {
       toValue: 1,
       duration: 200,
       useNativeDriver: false,
     }).start();
+
+  // Animación al salir el mouse
   const handleHoverOut = () =>
     Animated.timing(underline, {
       toValue: 0,
       duration: 200,
       useNativeDriver: false,
     }).start();
+
   const underlineWidth = underline.interpolate({
     inputRange: [0, 1],
     outputRange: ["0%", "100%"],
   });
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -46,6 +56,7 @@ function NavItem({ label, onPress }) {
   );
 }
 
+// Componente principal del Header
 export default function Header({ onNavigateSection }) {
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
@@ -59,6 +70,7 @@ export default function Header({ onNavigateSection }) {
   const { session, profile, signOut } = useContext(AuthContext);
   const [localRole, setLocalRole] = useState(null);
 
+  // Recupera el rol guardado localmente
   useEffect(() => {
     (async () => {
       const stored = await AsyncStorage.getItem(ROLE_KEY);
@@ -66,6 +78,7 @@ export default function Header({ onNavigateSection }) {
     })();
   }, []);
 
+  // Guarda el rol del perfil si existe
   useEffect(() => {
     (async () => {
       if (profile?.role) {
@@ -75,6 +88,7 @@ export default function Header({ onNavigateSection }) {
     })();
   }, [profile?.role]);
 
+  // Si no hay sesión, limpia los menús y el rol
   useEffect(() => {
     if (!session) {
       setLocalRole(null);
@@ -82,11 +96,21 @@ export default function Header({ onNavigateSection }) {
     }
   }, [session]);
 
+  // Cierra todo al montar el componente
+  useEffect(() => {
+    setMenuOpen(false);
+    setProfileMenu(false);
+    fadeAnim.setValue(0);
+    dropdownAnim.setValue(0);
+  }, []);
+
+  // Cierra todos los menús
   const closeAllMenus = () => {
     setMenuOpen(false);
     setProfileMenu(false);
   };
 
+  // Muestra u oculta el menú principal (hamburguesa)
   const toggleMenu = () => {
     if (profileMenu) setProfileMenu(false);
     const toOpen = !menuOpen;
@@ -98,6 +122,7 @@ export default function Header({ onNavigateSection }) {
     }).start();
   };
 
+  // Muestra u oculta el menú del perfil
   const toggleProfileMenu = () => {
     if (menuOpen) setMenuOpen(false);
     const toOpen = !profileMenu;
@@ -109,6 +134,7 @@ export default function Header({ onNavigateSection }) {
     }).start();
   };
 
+  // Cierra sesión y limpia datos locales
   const handleLogout = async () => {
     try {
       await signOut();
@@ -116,10 +142,11 @@ export default function Header({ onNavigateSection }) {
       setLocalRole(null);
       closeAllMenus();
     } catch (e) {
-      console.error(" Error al cerrar sesión:", e);
+      console.error("Error al cerrar sesión:", e);
     }
   };
 
+  // Navega a una sección específica dentro del Home
   const handleScroll = (section) => {
     try {
       const current = navigation?.getState?.()?.routes?.slice(-1)[0]?.name;
@@ -136,6 +163,7 @@ export default function Header({ onNavigateSection }) {
     closeAllMenus();
   };
 
+  // Efecto visual al iniciar sesión
   const transitionAnim = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     Animated.timing(transitionAnim, {
@@ -146,358 +174,413 @@ export default function Header({ onNavigateSection }) {
   }, [session]);
 
   return (
-    <Animated.View style={[styles.headerWrapper, { opacity: transitionAnim }]}>
-      <View style={[styles.headerContainer, isMobile && { paddingVertical: 25 }]}>
-        <Text style={styles.logoText} onPress={() => handleScroll("inicio")}>
-          onlearn
-        </Text>
+    <SafeAreaView edges={["top"]} style={{ backgroundColor: "#F8FAFB", zIndex: 9999 }} pointerEvents="box-none">
+      {/* Contenedor principal del header */}
+      <Animated.View style={[styles.headerWrapper, { opacity: transitionAnim }]} collapsable={false}>
+        <View style={[styles.headerContainer, isMobile && { paddingVertical: 25 }]}>
+          <Text style={styles.logoText} onPress={() => handleScroll("inicio")}>
+            onlearn
+          </Text>
 
-        {!isMobile && (
-          <View style={styles.navLinks}>
-            <NavItem label="Inicio" onPress={() => handleScroll("inicio")} />
-            <NavItem label="Cursos" onPress={() => handleScroll("cursos")} />
-            <NavItem label="Categorías" onPress={() => handleScroll("categorias")} />
-            <NavItem label="Contacto" onPress={() => handleScroll("contacto")} />
-          </View>
-        )}
+          {/* Menú de navegación (solo PC o tablet) */}
+          {!isMobile && (
+            <View style={styles.navLinks}>
+              <NavItem label="Inicio" onPress={() => handleScroll("inicio")} />
+              <NavItem label="Cursos" onPress={() => handleScroll("cursos")} />
+              <NavItem label="Categorías" onPress={() => handleScroll("categorias")} />
+              <NavItem label="Contacto" onPress={() => handleScroll("contacto")} />
+            </View>
+          )}
 
-        {!isMobile && (
-          <>
-            {session ? (
-              <View style={styles.profileWrapper}>
-                <TouchableOpacity style={styles.avatarButton} onPress={toggleProfileMenu}>
+          {/* Área de botones o perfil según estado */}
+          {!isMobile && (
+            <>
+              {session ? (
+                <View style={styles.profileWrapper}>
+                  {/* Avatar de usuario */}
+                  <TouchableOpacity style={styles.avatarButton} onPress={toggleProfileMenu}>
+                    <Image
+                      source={
+                        profile?.avatar_url
+                          ? { uri: profile.avatar_url }
+                          : require("../../assets/Perfil.png")
+                      }
+                      style={styles.avatar}
+                    />
+                  </TouchableOpacity>
+
+                  {/* Menú desplegable del perfil */}
+                  {profileMenu && (
+                    <Animated.View
+                      style={[
+                        styles.dropdownMenu,
+                        {
+                          opacity: dropdownAnim,
+                          transform: [
+                            {
+                              translateY: dropdownAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [-10, 0],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    >
+                      {/* Opciones según rol */}
+                      {localRole === "client" && (
+                        <>
+                          <TouchableOpacity
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              navigation.navigate("MyCourses");
+                              closeAllMenus();
+                            }}
+                          >
+                            <Text style={styles.dropdownText}>Mis cursos</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout}>
+                            <Text style={styles.dropdownText}>Cerrar sesión</Text>
+                          </TouchableOpacity>
+                        </>
+                      )}
+
+                      {localRole === "pending_instructor" && (
+                        <>
+                          <View style={styles.dropdownItem}>
+                            <Text style={styles.dropdownTextPending}>Esperando aprobación</Text>
+                            <Text style={styles.dropdownSubtext}>Tu solicitud está siendo revisada</Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              navigation.navigate("MyCourses");
+                              closeAllMenus();
+                            }}
+                          >
+                            <Text style={styles.dropdownText}>Mis cursos</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout}>
+                            <Text style={styles.dropdownText}>Cerrar sesión</Text>
+                          </TouchableOpacity>
+                        </>
+                      )}
+
+                      {localRole === "instructor" && (
+                        <>
+                          <TouchableOpacity
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              navigation.navigate("CreateCourse");
+                              closeAllMenus();
+                            }}
+                          >
+                            <Text style={styles.dropdownText}>Crear curso</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              navigation.navigate("MyCourses");
+                              closeAllMenus();
+                            }}
+                          >
+                            <Text style={styles.dropdownText}>Mis cursos</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout}>
+                            <Text style={styles.dropdownText}>Cerrar sesión</Text>
+                          </TouchableOpacity>
+                        </>
+                      )}
+
+                      {localRole === "admin" && (
+                        <>
+                          <TouchableOpacity
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              navigation.navigate("AdminPanel");
+                              closeAllMenus();
+                            }}
+                          >
+                            <Text style={styles.dropdownText}>Panel Admin</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              navigation.navigate("CreateCourse");
+                              closeAllMenus();
+                            }}
+                          >
+                            <Text style={styles.dropdownText}>Crear curso</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              navigation.navigate("MyCourses");
+                              closeAllMenus();
+                            }}
+                          >
+                            <Text style={styles.dropdownText}>Mis cursos</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout}>
+                            <Text style={styles.dropdownText}>Cerrar sesión</Text>
+                          </TouchableOpacity>
+                        </>
+                      )}
+                    </Animated.View>
+                  )}
+                </View>
+              ) : (
+                // Botones de login y registro si no hay sesión
+                <View style={styles.buttons}>
+                  <TouchableOpacity
+                    style={styles.loginBtn}
+                    onPress={() => {
+                      navigation.navigate("Login");
+                      closeAllMenus();
+                    }}
+                  >
+                    <Text style={styles.loginText}>INICIAR SESIÓN</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.signupBtn}
+                    onPress={() => {
+                      navigation.navigate("Register");
+                      closeAllMenus();
+                    }}
+                  >
+                    <Text style={styles.signupText}>CREAR CUENTA</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
+          )}
+
+          {/* Menú móvil con hamburguesa */}
+          {isMobile && (
+            <View style={styles.mobileRight}>
+              {session && (
+                <TouchableOpacity onPress={toggleProfileMenu} style={{ marginRight: 10 }}>
                   <Image
                     source={
                       profile?.avatar_url
                         ? { uri: profile.avatar_url }
                         : require("../../assets/Perfil.png")
                     }
-                    style={styles.avatar}
+                    style={styles.avatarSmall}
                   />
                 </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={toggleMenu}>
+                <Ionicons name={menuOpen ? "close" : "menu"} size={34} color="#0B7077" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </Animated.View>
 
-                {profileMenu && (
-                  <Animated.View
-                    style={[
-                      styles.dropdownMenu,
-                      {
-                        opacity: dropdownAnim,
-                        transform: [
-                          {
-                            translateY: dropdownAnim.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [-10, 0],
-                            }),
-                          },
-                        ],
-                      },
-                    ]}
-                  >
+      {/* Menú móvil principal */}
+      {isMobile && (
+        <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={toggleMenu}>
+          <TouchableWithoutFeedback onPress={toggleMenu}>
+            <View style={styles.menuOverlayWhite} />
+          </TouchableWithoutFeedback>
 
-                    {localRole === "client" && (
-                      <>
-                        <TouchableOpacity
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            navigation.navigate("MyCourses");
-                            closeAllMenus();
-                          }}
-                        >
-                          <Text style={styles.dropdownText}>Mis cursos</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout}>
-                          <Text style={styles.dropdownText}>Cerrar sesión</Text>
-                        </TouchableOpacity>
-                      </>
-                    )}
+          <Animated.View
+            style={[
+              styles.mobileMenuSheet,
+              {
+                opacity: fadeAnim,
+                transform: [
+                  {
+                    translateY: fadeAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-10, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <TouchableOpacity onPress={() => handleScroll("inicio")} style={styles.mobileItem}>
+              <Text style={styles.mobileText}>Inicio</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleScroll("cursos")} style={styles.mobileItem}>
+              <Text style={styles.mobileText}>Cursos</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleScroll("categorias")} style={styles.mobileItem}>
+              <Text style={styles.mobileText}>Categorías</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleScroll("contacto")} style={styles.mobileItem}>
+              <Text style={styles.mobileText}>Contacto</Text>
+            </TouchableOpacity>
 
-
-                    {localRole === "pending_instructor" && (
-                      <>
-                        <View style={styles.dropdownItem}>
-                          <Text style={styles.dropdownTextPending}>
-                            ⏳ Esperando aprobación
-                          </Text>
-                          <Text style={styles.dropdownSubtext}>
-                            Tu solicitud está siendo revisada
-                          </Text>
-                        </View>
-                        <TouchableOpacity
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            navigation.navigate("MyCourses");
-                            closeAllMenus();
-                          }}
-                        >
-                          <Text style={styles.dropdownText}>Mis cursos</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout}>
-                          <Text style={styles.dropdownText}>Cerrar sesión</Text>
-                        </TouchableOpacity>
-                      </>
-                    )}
-
-                    {localRole === "instructor" && (
-                      <>
-                        <TouchableOpacity
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            navigation.navigate("CreateCourse");
-                            closeAllMenus();
-                          }}
-                        >
-                          <Text style={styles.dropdownText}>Crear curso</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            navigation.navigate("MyCourses");
-                            closeAllMenus();
-                          }}
-                        >
-                          <Text style={styles.dropdownText}>Mis cursos</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout}>
-                          <Text style={styles.dropdownText}>Cerrar sesión</Text>
-                        </TouchableOpacity>
-                      </>
-                    )}
-
-                    {localRole === "admin" && (
-                      <>
-                        <TouchableOpacity
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            navigation.navigate("AdminPanel");
-                            closeAllMenus();
-                          }}
-                        >
-                          <Text style={styles.dropdownText}>Panel Admin</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            navigation.navigate("CreateCourse");
-                            closeAllMenus();
-                          }}
-                        >
-                          <Text style={styles.dropdownText}>Crear curso</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            navigation.navigate("MyCourses");
-                            closeAllMenus();
-                          }}
-                        >
-                          <Text style={styles.dropdownText}>Mis cursos</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout}>
-                          <Text style={styles.dropdownText}>Cerrar sesión</Text>
-                        </TouchableOpacity>
-                      </>
-                    )}
-                  </Animated.View>
-                )}
-              </View>
-            ) : (
-              <View style={styles.buttons}>
+            {!session && (
+              <>
                 <TouchableOpacity
-                  style={styles.loginBtn}
                   onPress={() => {
                     navigation.navigate("Login");
                     closeAllMenus();
                   }}
+                  style={styles.mobileItem}
                 >
-                  <Text style={styles.loginText}>LOG IN</Text>
+                  <Text style={styles.mobileText}>Iniciar sesión</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.signupBtn}
                   onPress={() => {
                     navigation.navigate("Register");
                     closeAllMenus();
                   }}
+                  style={styles.mobileItem}
                 >
-                  <Text style={styles.signupText}>SIGN UP</Text>
+                  <Text style={styles.mobileText}>Crear cuenta</Text>
                 </TouchableOpacity>
-              </View>
+              </>
             )}
-          </>
-        )}
-
-        {isMobile && (
-          <View style={styles.mobileRight}>
-            {session && (
-              <TouchableOpacity onPress={toggleProfileMenu} style={{ marginRight: 10 }}>
-                <Image
-                  source={
-                    profile?.avatar_url
-                      ? { uri: profile.avatar_url }
-                      : require("../../assets/Perfil.png")
-                  }
-                  style={styles.avatarSmall}
-                />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity onPress={toggleMenu}>
-              <Ionicons name={menuOpen ? "close" : "menu"} size={34} color="#0B7077" />
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-
-      {isMobile && menuOpen && (
-        <Animated.View style={[styles.mobileMenu, { opacity: fadeAnim }]}>
-          <TouchableOpacity onPress={() => handleScroll("inicio")} style={styles.mobileItem}>
-            <Text style={styles.mobileText}>Inicio</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleScroll("cursos")} style={styles.mobileItem}>
-            <Text style={styles.mobileText}>Cursos</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleScroll("categorias")} style={styles.mobileItem}>
-            <Text style={styles.mobileText}>Categorías</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleScroll("contacto")} style={styles.mobileItem}>
-            <Text style={styles.mobileText}>Contacto</Text>
-          </TouchableOpacity>
-
-          {!session && (
-            <>
-              <TouchableOpacity
-                onPress={() => {
-                  navigation.navigate("Login");
-                  closeAllMenus();
-                }}
-                style={styles.mobileItem}
-              >
-                <Text style={styles.mobileText}>Log In</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  navigation.navigate("Register");
-                  closeAllMenus();
-                }}
-                style={styles.mobileItem}
-              >
-                <Text style={styles.mobileText}>Sign Up</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </Animated.View>
+          </Animated.View>
+        </Modal>
       )}
 
-      {isMobile && profileMenu && (
-        <Animated.View style={[styles.mobileProfileMenu, { opacity: dropdownAnim }]}>
-          {/* 👨‍🎓 Cliente Mobile */}
-          {localRole === "client" && (
-            <>
-              <TouchableOpacity
-                style={styles.mobileItem}
-                onPress={() => {
-                  navigation.navigate("MyCourses");
-                  closeAllMenus();
-                }}
-              >
-                <Text style={styles.mobileText}>Mis cursos</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.mobileItem} onPress={handleLogout}>
-                <Text style={styles.mobileText}>Cerrar sesión</Text>
-              </TouchableOpacity>
-            </>
-          )}
+      {/* Menú del perfil en móvil */}
+      {isMobile && (
+        <Modal
+          visible={profileMenu}
+          transparent
+          animationType="fade"
+          onRequestClose={toggleProfileMenu}
+        >
+          <TouchableWithoutFeedback onPress={toggleProfileMenu}>
+            <View style={styles.menuOverlayWhite} />
+          </TouchableWithoutFeedback>
 
-          {/* ⏳ Pending Instructor Mobile */}
-          {localRole === "pending_instructor" && (
-            <>
-              <View style={styles.mobileItem}>
-                <Text style={styles.mobileTextPending}>⏳ Esperando aprobación</Text>
-                <Text style={styles.mobileSubtext}>Tu solicitud está siendo revisada</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.mobileItem}
-                onPress={() => {
-                  navigation.navigate("MyCourses");
-                  closeAllMenus();
-                }}
-              >
-                <Text style={styles.mobileText}>Mis cursos</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.mobileItem} onPress={handleLogout}>
-                <Text style={styles.mobileText}>Cerrar sesión</Text>
-              </TouchableOpacity>
-            </>
-          )}
+          <Animated.View
+            style={[
+              styles.mobileProfileSheet,
+              {
+                opacity: dropdownAnim,
+                transform: [
+                  {
+                    translateY: dropdownAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-10, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            {/* Opciones según rol para vista móvil */}
+            {localRole === "client" && (
+              <>
+                <TouchableOpacity
+                  style={styles.mobileItem}
+                  onPress={() => {
+                    navigation.navigate("MyCourses");
+                    closeAllMenus();
+                  }}
+                >
+                  <Text style={styles.mobileText}>Mis cursos</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.mobileItem} onPress={handleLogout}>
+                  <Text style={styles.mobileText}>Cerrar sesión</Text>
+                </TouchableOpacity>
+              </>
+            )}
 
-          {/* 👨‍🏫 Instructor Mobile */}
-          {localRole === "instructor" && (
-            <>
-              <TouchableOpacity
-                style={styles.mobileItem}
-                onPress={() => {
-                  navigation.navigate("CreateCourse");
-                  closeAllMenus();
-                }}
-              >
-                <Text style={styles.mobileText}>Crear curso</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.mobileItem}
-                onPress={() => {
-                  navigation.navigate("MyCourses");
-                  closeAllMenus();
-                }}
-              >
-                <Text style={styles.mobileText}>Mis cursos</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.mobileItem} onPress={handleLogout}>
-                <Text style={styles.mobileText}>Cerrar sesión</Text>
-              </TouchableOpacity>
-            </>
-          )}
+            {localRole === "pending_instructor" && (
+              <>
+                <View style={styles.mobileItem}>
+                  <Text style={styles.mobileTextPending}>Esperando aprobación</Text>
+                  <Text style={styles.mobileSubtext}>Tu solicitud está siendo revisada</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.mobileItem}
+                  onPress={() => {
+                    navigation.navigate("MyCourses");
+                    closeAllMenus();
+                  }}
+                >
+                  <Text style={styles.mobileText}>Mis cursos</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.mobileItem} onPress={handleLogout}>
+                  <Text style={styles.mobileText}>Cerrar sesión</Text>
+                </TouchableOpacity>
+              </>
+            )}
 
-          {/* 👑 Admin Mobile */}
-          {localRole === "admin" && (
-            <>
-              <TouchableOpacity
-                style={styles.mobileItem}
-                onPress={() => {
-                  navigation.navigate("AdminPanel");
-                  closeAllMenus();
-                }}
-              >
-                <Text style={styles.mobileText}>Panel Admin</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.mobileItem}
-                onPress={() => {
-                  navigation.navigate("CreateCourse");
-                  closeAllMenus();
-                }}
-              >
-                <Text style={styles.mobileText}>Crear curso</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.mobileItem}
-                onPress={() => {
-                  navigation.navigate("MyCourses");
-                  closeAllMenus();
-                }}
-              >
-                <Text style={styles.mobileText}>Mis cursos</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.mobileItem} onPress={handleLogout}>
-                <Text style={styles.mobileText}>Cerrar sesión</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </Animated.View>
+            {localRole === "instructor" && (
+              <>
+                <TouchableOpacity
+                  style={styles.mobileItem}
+                  onPress={() => {
+                    navigation.navigate("CreateCourse");
+                    closeAllMenus();
+                  }}
+                >
+                  <Text style={styles.mobileText}>Crear curso</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.mobileItem}
+                  onPress={() => {
+                    navigation.navigate("MyCourses");
+                    closeAllMenus();
+                  }}
+                >
+                  <Text style={styles.mobileText}>Mis cursos</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.mobileItem} onPress={handleLogout}>
+                  <Text style={styles.mobileText}>Cerrar sesión</Text>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {localRole === "admin" && (
+              <>
+                <TouchableOpacity
+                  style={styles.mobileItem}
+                  onPress={() => {
+                    navigation.navigate("AdminPanel");
+                    closeAllMenus();
+                  }}
+                >
+                  <Text style={styles.mobileText}>Panel Admin</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.mobileItem}
+                  onPress={() => {
+                    navigation.navigate("CreateCourse");
+                    closeAllMenus();
+                  }}
+                >
+                  <Text style={styles.mobileText}>Crear curso</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.mobileItem}
+                  onPress={() => {
+                    navigation.navigate("MyCourses");
+                    closeAllMenus();
+                  }}
+                >
+                  <Text style={styles.mobileText}>Mis cursos</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.mobileItem} onPress={handleLogout}>
+                  <Text style={styles.mobileText}>Cerrar sesión</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </Animated.View>
+        </Modal>
       )}
-    </Animated.View>
+    </SafeAreaView>
   );
 }
 
+// Estilos del componente
 const styles = StyleSheet.create({
-  headerWrapper: { zIndex: 100 },
+  headerWrapper: {
+    zIndex: 1000,
+    position: "relative",
+    overflow: "visible",
+  },
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -550,32 +633,24 @@ const styles = StyleSheet.create({
     elevation: 6,
     paddingVertical: 8,
     minWidth: 200,
+    zIndex: 2000,
   },
   dropdownItem: { paddingVertical: 10, paddingHorizontal: 15 },
   dropdownText: { fontSize: 15, color: "#0B7077", fontWeight: "500" },
-  dropdownTextPending: { 
-    fontSize: 15, 
-    color: "#FF7A00", 
-    fontWeight: "600" 
-  },
-  dropdownSubtext: { 
-    fontSize: 12, 
-    color: "#666", 
-    marginTop: 2 
-  },
+  dropdownTextPending: { fontSize: 15, color: "#FF7A00", fontWeight: "600" },
+  dropdownSubtext: { fontSize: 12, color: "#666", marginTop: 2 },
   mobileRight: { flexDirection: "row", alignItems: "center" },
-  avatarSmall: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 1.5,
-    borderColor: "#0B7077",
+  avatarSmall: { width: 34, height: 34, borderRadius: 17, borderWidth: 0 },
+
+  // Estilos para los modales móviles
+  menuOverlayWhite: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "transparent",
+    opacity: 1,
   },
-  mobileMenu: {
-    position: "absolute",
-    top: 90,
-    right: 15,
-    left: 15,
+  mobileMenuSheet: {
+    marginTop: 130,
+    marginHorizontal: 15,
     backgroundColor: "#fff",
     borderRadius: 12,
     paddingVertical: 15,
@@ -583,13 +658,13 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.25,
     shadowRadius: 8,
-    elevation: 8,
-    zIndex: 999,
+    elevation: 12,
+    zIndex: 3000,
   },
-  mobileProfileMenu: {
-    position: "absolute",
-    top: 90,
-    right: 15,
+  mobileProfileSheet: {
+    marginTop: 130,
+    alignSelf: "flex-end",
+    marginRight: 15,
     backgroundColor: "#fff",
     borderRadius: 12,
     paddingVertical: 10,
@@ -597,19 +672,11 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.25,
     shadowRadius: 8,
-    elevation: 8,
-    zIndex: 1000,
+    elevation: 12,
+    zIndex: 3000,
   },
   mobileItem: { paddingVertical: 10 },
   mobileText: { fontSize: 16, color: "#0B7077", fontWeight: "600" },
-  mobileTextPending: { 
-    fontSize: 16, 
-    color: "#FF7A00", 
-    fontWeight: "600" 
-  },
-  mobileSubtext: { 
-    fontSize: 12, 
-    color: "#666", 
-    marginTop: 2 
-  },
+  mobileTextPending: { fontSize: 16, color: "#FF7A00", fontWeight: "600" },
+  mobileSubtext: { fontSize: 12, color: "#666", marginTop: 2 },
 });

@@ -1,50 +1,46 @@
-import React, { useContext } from "react";
-import { NavigationContainer } from "@react-navigation/native";
+import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
+// Pantallas públicas (accesibles sin iniciar sesión)
 import HomeScreen from "../screens/HomeScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
-import CoursesScreen from "../screens/CoursesScreen";
+import AuthCallbackScreen from "../screens/AuthCallbackScreen";
+
+// Pantallas privadas (requieren sesión o validación interna)
 import CourseDetailScreen from "../screens/CourseDetailScreen";
-import AllCoursesScreen from "../screens/AllCoursesScreen";
-import CreateCourseScreen from "../screens/CreateCourseScreen";
 import MyCoursesScreen from "../screens/MyCoursesScreen";
+import CreateCourseScreen from "../screens/CreateCourseScreen";
 import CoursePlayerScreen from "../screens/CoursePlayerScreen";
+import AllCoursesScreen from "../screens/AllCoursesScreen";
 import AdminPanelScreen from "../screens/AdminPanelScreen";
-import EditModuleScreen from "../screens/EditModuleScreen"; // ✅ tu nombre exacto
-import { AuthContext } from "../context/AuthContext";
 import EditPortadaScreen from "../screens/EditPortadaScreen";
+import EditModuleScreen from "../screens/EditModuleScreen";
 
-
-
+// Configuración del stack principal de navegación
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
-  const { session, loading } = useContext(AuthContext);
-
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="Courses" component={CoursesScreen} />
-        <Stack.Screen name="CourseDetail" component={CourseDetailScreen} />
-        <Stack.Screen name="AllCourses" component={AllCoursesScreen} />
-        <Stack.Screen name="CreateCourse" component={CreateCourseScreen} />
-        <Stack.Screen name="MyCourses" component={MyCoursesScreen} />
-        <Stack.Screen name="CoursePlayer" component={CoursePlayerScreen} />
-        <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />
-        <Stack.Screen name="EditPortada" component={EditPortadaScreen} />
+    <Stack.Navigator
+      screenOptions={{ headerShown: false, animation: "fade" }}
+      initialRouteName="Home" // Ruta inicial: Home
+    >
+      {/* Rutas públicas */}
+      <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="AuthCallback" component={AuthCallbackScreen} />
 
-        {/* ✅ Nueva pantalla: Editar módulos */}
-        <Stack.Screen
-          name="EditModules"
-          component={EditModuleScreen}
-          options={{ headerShown: false }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+      {/* Rutas privadas */}
+      <Stack.Screen name="CourseDetail" component={CourseDetailScreen} />
+      <Stack.Screen name="MyCourses" component={MyCoursesScreen} />
+      <Stack.Screen name="CreateCourse" component={CreateCourseScreen} />
+      <Stack.Screen name="CoursePlayer" component={CoursePlayerScreen} />
+      <Stack.Screen name="AllCourses" component={AllCoursesScreen} />
+      <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />
+      <Stack.Screen name="EditPortada" component={EditPortadaScreen} />
+      <Stack.Screen name="EditModule" component={EditModuleScreen} />
+    </Stack.Navigator>
   );
 }

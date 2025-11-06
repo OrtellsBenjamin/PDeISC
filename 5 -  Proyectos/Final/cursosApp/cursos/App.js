@@ -1,20 +1,22 @@
-import React from "react";
+import React, { useContext, useMemo } from "react";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
-import { AuthProvider } from "./src/context/AuthContext";
+import { StyleSheet, View, Text, ActivityIndicator } from "react-native";
+import { NavigationContainer } from "@react-navigation/native";
+import { AuthProvider, AuthContext } from "./src/context/AuthContext";
 import RootNavigator from "./src/navigation/RootNavigator";
 import Toast, { BaseToast, ErrorToast } from "react-native-toast-message";
 
-// 🔹 Configuración global de estilo para los Toasts
+// 🎨 Estilo global unificado para Toasts
 const toastConfig = {
-  // ✅ Toast de éxito
   success: (props) => (
     <BaseToast
       {...props}
       style={{
         borderLeftColor: "#0B7077",
-        borderRadius: 10,
         backgroundColor: "#E9F6F5",
+        borderRadius: 10,
+        borderLeftWidth: 6,
+        minHeight: 70,
       }}
       contentContainerStyle={{ paddingHorizontal: 15 }}
       text1Style={{
@@ -24,111 +26,133 @@ const toastConfig = {
       }}
       text2Style={{
         fontSize: 14,
-        color: "#333",
+        color: "#0B7077",
+        opacity: 0.8,
+        marginTop: 4,
       }}
     />
   ),
-
-  // ✅ Toast de error
   error: (props) => (
     <ErrorToast
       {...props}
       style={{
-        borderLeftColor: "#FF7A00",
+        borderLeftColor: "#E63946",
+        backgroundColor: "#FFECEA",
         borderRadius: 10,
-        backgroundColor: "#FFF4EC",
+        borderLeftWidth: 6,
+        minHeight: 70,
       }}
       contentContainerStyle={{ paddingHorizontal: 15 }}
       text1Style={{
         fontSize: 16,
         fontWeight: "700",
-        color: "#FF7A00",
+        color: "#E63946",
       }}
       text2Style={{
         fontSize: 14,
-        color: "#333",
+        color: "#A00",
+        opacity: 0.8,
+        marginTop: 4,
       }}
     />
   ),
-
-  // ✅ Toast personalizado con botones [Sí] / [No]
-  info: ({ text1, text2, props }) => (
-    <View
+  info: (props) => (
+    <BaseToast
+      {...props}
       style={{
-        backgroundColor: "#fff",
-        borderLeftColor: "#0B7077",
-        borderLeftWidth: 6,
-        padding: 14,
+        borderLeftColor: "#E86A33",
+        backgroundColor: "#FFF7F1",
         borderRadius: 10,
-        marginHorizontal: 10,
-        shadowColor: "#000",
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
-        elevation: 3,
+        borderLeftWidth: 6,
+        minHeight: 70,
       }}
-    >
-      <Text style={{ fontWeight: "bold", color: "#0B7077", marginBottom: 5 }}>
-        ⚠️ {text1}
-      </Text>
-      {text2 ? (
-        <Text style={{ color: "#333", marginBottom: 12 }}>{text2}</Text>
-      ) : null}
-
-      {props.showConfirm && (
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "flex-end",
-            gap: 10,
-          }}
-        >
-          {/* Primero el botón SÍ */}
-          <TouchableOpacity
-            onPress={props.onConfirm}
-            style={{
-              paddingVertical: 6,
-              paddingHorizontal: 14,
-              borderRadius: 6,
-              backgroundColor: "#E63946",
-            }}
-          >
-            <Text style={{ color: "#fff", fontWeight: "700" }}>Sí</Text>
-          </TouchableOpacity>
-
-          {/* Después el botón NO */}
-          <TouchableOpacity
-            onPress={props.onCancel}
-            style={{
-              paddingVertical: 6,
-              paddingHorizontal: 12,
-              borderRadius: 6,
-              backgroundColor: "#E9F6F5",
-            }}
-          >
-            <Text style={{ color: "#0B7077", fontWeight: "600" }}>No</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
+      contentContainerStyle={{ paddingHorizontal: 15 }}
+      text1Style={{
+        fontSize: 16,
+        fontWeight: "700",
+        color: "#E86A33",
+      }}
+      text2Style={{
+        fontSize: 14,
+        color: "#E86A33",
+        opacity: 0.8,
+        marginTop: 4,
+      }}
+    />
   ),
 };
+
+
+// 🔗 Deep linking
+const linking = {
+  prefixes: ["onlearn://", "https://onlearn.com", "http://localhost"],
+  config: {
+    screens: {
+      Home: "home",
+      Login: "login",
+      Register: "register",
+      AuthCallback: "auth/callback",
+      CourseDetail: "course/:id",
+      MyCourses: "mycourses",
+    },
+  },
+};
+
+function AppContent() {
+  const { loading } = useContext(AuthContext);
+
+  // ✅ Solo usamos loading (isInitializing no existe en el contexto)
+  const showOverlay = useMemo(() => loading, [loading]);
+
+  return (
+    <NavigationContainer linking={linking}>
+      <View style={styles.container}>
+        <StatusBar style="auto" />
+        <RootNavigator />
+
+        {showOverlay && (
+          <View style={styles.loadingOverlay} pointerEvents="none">
+            <View style={styles.loadingCard}>
+              <ActivityIndicator size="large" color="#0B7077" />
+              <Text style={styles.loadingText}>Cargando plataforma…</Text>
+            </View>
+          </View>
+        )}
+
+        <Toast config={toastConfig} />
+      </View>
+    </NavigationContainer>
+  );
+}
 
 export default function App() {
   return (
     <AuthProvider>
-      <View style={styles.container}>
-        <StatusBar style="auto" />
-        <RootNavigator />
-        {/* 🔹 Toast global con la nueva config */}
-        <Toast config={toastConfig} />
-      </View>
+      <AppContent />
     </AuthProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
+  container: { flex: 1, backgroundColor: "#fff" },
+  loadingOverlay: {
+    position: "absolute",
+    inset: 0,
+    backgroundColor: "rgba(255,255,255,0.65)",
+    alignItems: "center",
+    justifyContent: "center",
   },
+  loadingCard: {
+    backgroundColor: "#fff",
+    paddingVertical: 18,
+    paddingHorizontal: 22,
+    borderRadius: 12,
+    alignItems: "center",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+  },
+  loadingText: { marginTop: 10, color: "#0B7077", fontWeight: "600" },
 });

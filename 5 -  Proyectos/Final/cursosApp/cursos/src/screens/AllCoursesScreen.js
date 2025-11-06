@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import BackButton from "../components/BackButton";
 
 
 export default function AllCoursesScreen({ navigation, route }) {
@@ -29,7 +30,7 @@ const API_URL = "https://onlearn-api.onrender.com/api";
       const data = await res.json();
       if (Array.isArray(data)) setCategories(data);
     } catch (err) {
-      console.error("❌ Error cargando categorías:", err);
+      console.error("Error cargando categorías:", err);
     } finally {
       setLoadingCats(false);
     }
@@ -85,10 +86,7 @@ const API_URL = "https://onlearn-api.onrender.com/api";
   return (
     <ScrollView style={styles.container}>
 
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Ionicons name="arrow-back" size={20} color="#fff" style={{ marginRight: 5 }} />
-        <Text style={styles.backText}>Volver</Text>
-      </TouchableOpacity>
+      <BackButton onPress={() => navigation.goBack()} />
 
       <Text style={styles.title}>Explorá nuestros Cursos</Text>
 
@@ -110,6 +108,7 @@ const API_URL = "https://onlearn-api.onrender.com/api";
         })}
       </ScrollView>
 
+    
     
       {filteredCourses.length === 0 ? (
         <Text style={styles.emptyText}>

@@ -1,4 +1,4 @@
-// src/screens/EditPortadaScreen.js
+
 import React, { useContext, useState, useEffect } from "react";
 import {
   View,
@@ -33,7 +33,7 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // ============ Toast responsive ============
+  //Toast responsive
   const showToast = (type, text1, text2 = "") => {
     const isMobile = width < 700;
     Toast.show({
@@ -54,7 +54,7 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
     });
   };
 
-  // ============ Helpers upload ============
+  //Helpers upload
   const guessMimeFromUri = (uri) => {
     const lower = (uri || "").toLowerCase();
     if (lower.endsWith(".png")) return "image/png";
@@ -94,9 +94,8 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
     return data.url;
   };
 
-  // =====================================================
-  // 🔹 Cargar categorías
-  // =====================================================
+  //Cargar categorías
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -110,9 +109,8 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
     fetchCategories();
   }, []);
 
-  // =====================================================
-  // 🔹 Seleccionar imagen
-  // =====================================================
+  // Seleccionar imagen
+
   const handleImagePicker = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -128,9 +126,9 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
     }
   };
 
-  // =====================================================
-  // 🔹 Validaciones
-  // =====================================================
+
+  //Validaciones
+
   const handleTitleChange = (value) => {
     if (value.length > 80) {
       showToast("error", "Título demasiado largo", "Máximo 80 caracteres.");
@@ -165,9 +163,8 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
     }
   };
 
-  // =====================================================
-  // 🔹 Guardar cambios (PATCH)
-  // =====================================================
+ 
+  //Guardar cambios (PATCH)
   const handleSaveChanges = async () => {
     try {
       if (!title || !description || !price || !category_id) {
@@ -216,9 +213,7 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
     }
   };
 
-  // =====================================================
-  // 🔹 Render principal
-  // =====================================================
+  //Render principal
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.headerTitle}>Editar Portada</Text>
@@ -291,9 +286,8 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
   );
 }
 
-// =====================================================
-// 🎨 ESTILOS
-// =====================================================
+//Estilos
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8FAFB", padding: 20 },
   headerTitle: {

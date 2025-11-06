@@ -13,6 +13,7 @@ import * as ImagePicker from "expo-image-picker";
 import Toast from "react-native-toast-message";
 import { AuthContext } from "../context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function EditModuleScreen({ route, navigation }) {
   const { course } = route.params;
@@ -26,7 +27,7 @@ export default function EditModuleScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // ============ Helpers upload ============
+  //Helpers upload
   const guessMimeFromUri = (uri) => {
     const lower = (uri || "").toLowerCase();
     if (lower.endsWith(".mov")) return "video/quicktime";
@@ -45,7 +46,7 @@ export default function EditModuleScreen({ route, navigation }) {
     }
   };
 
-  // 🌐 Helper para convertir blob a File en Web
+  //Helper para convertir blob a File en Web
   const blobToFile = async (blobUri, fileName, mimeType) => {
     const response = await fetch(blobUri);
     const blob = await response.blob();
@@ -53,26 +54,21 @@ export default function EditModuleScreen({ route, navigation }) {
   };
 
   const uploadFile = async (uri) => {
-    console.log(`[EDIT-MODS] 📤 Subiendo video:`, uri);
-    console.log(`[EDIT-MODS] 🌍 Platform:`, Platform.OS);
     
     const form = new FormData();
     const name = fileNameFromUri(uri, "video.mp4");
     const type = guessMimeFromUri(uri);
 
-    // 🌐 Para WEB: convertir blob a File
+    //Para WEB: convertir blob a File
     if (Platform.OS === 'web' && uri.startsWith('blob:')) {
-      console.log(`[EDIT-MODS] 🌐 Detectado blob en web, convirtiendo a File...`);
       try {
         const file = await blobToFile(uri, name, type);
         form.append("file", file);
-        console.log(`[EDIT-MODS] ✅ File creado:`, { name: file.name, size: file.size, type: file.type });
       } catch (err) {
-        console.error(`[EDIT-MODS] ❌ Error convirtiendo blob:`, err);
         throw new Error(`No se pudo procesar el video: ${err.message}`);
       }
     } else {
-      // 📱 Para mobile: usar uri directamente
+      //Para movile: usar uri directamente
       form.append("file", {
         uri,
         name,
@@ -82,27 +78,21 @@ export default function EditModuleScreen({ route, navigation }) {
 
     form.append("folder", "videos");
 
-    console.log(`[EDIT-MODS] 📦 FormData preparado`);
-
     const res = await fetch(UPLOAD_FILE_URL, {
       method: "POST",
       headers: {
-        // ⚠️ NO especificar Content-Type manualmente en web
+        //NO especificar Content-Type manualmente en web
         ...(Platform.OS !== 'web' ? { "Content-Type": "multipart/form-data" } : {}),
         ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
       },
       body: form,
     });
 
-    console.log(`[EDIT-MODS] 📥 Status code: ${res.status}`);
-
     let data;
     try {
       data = await res.json();
-      console.log(`[EDIT-MODS] 📥 Respuesta upload:`, { ok: res.ok, data });
     } catch (parseErr) {
       const text = await res.text();
-      console.error(`[EDIT-MODS] ❌ Error parseando respuesta:`, text.substring(0, 500));
       throw new Error(`El servidor respondió con un error. Status: ${res.status}`);
     }
     
@@ -110,13 +100,13 @@ export default function EditModuleScreen({ route, navigation }) {
       throw new Error(data?.error || "No se pudo subir el video.");
     }
 
-    console.log(`[EDIT-MODS] ✅ Video subido correctamente:`, data.url);
+    console.log(`Video subido correctamente:`, data.url);
     return data.url;
   };
 
-  // =====================================================
-  // 🔹 Cargar lecciones existentes
-  // =====================================================
+ 
+  //Cargar lecciones existentes
+
   useEffect(() => {
     const fetchLessons = async () => {
       try {
@@ -124,7 +114,7 @@ export default function EditModuleScreen({ route, navigation }) {
         const data = await res.json();
         setLessons(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("[EDIT-MODS] Error cargando lecciones:", err);
+        console.error("Error cargando lecciones:", err);
         Toast.show({
           type: "error",
           text1: "Error al cargar módulos",
@@ -138,9 +128,9 @@ export default function EditModuleScreen({ route, navigation }) {
     fetchLessons();
   }, [course.id]);
 
-  // =====================================================
-  // 🔹 Agregar nueva lección vacía
-  // =====================================================
+
+  //Agregar nueva lección vacía
+
   const addLesson = () => {
     setLessons((prev) => [
       ...prev,
@@ -156,9 +146,8 @@ export default function EditModuleScreen({ route, navigation }) {
     ]);
   };
 
-  // =====================================================
-  // 🔹 Actualizar campo de lección
-  // =====================================================
+  //Actualizar campo de lección
+
   const updateLesson = (index, field, value) => {
     const updated = [...lessons];
     if (field === "title" && value.length > 80) {
@@ -181,20 +170,18 @@ export default function EditModuleScreen({ route, navigation }) {
     setLessons(updated);
   };
 
-  // =====================================================
-  // 🔹 Seleccionar video
-  // =====================================================
+  //Seleccionar video
   const pickVideo = async (index) => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['videos'], // ✅ Nuevo formato
+        mediaTypes: ['videos'], //Nuevo formato
         allowsEditing: false,
         quality: 1,
       });
       
       if (!result.canceled) {
         const uri = result.assets[0].uri;
-        console.log(`[EDIT-MODS] 🎬 Video seleccionado:`, uri);
+        console.log(`🎬 Video seleccionado:`, uri);
         
         const updated = [...lessons];
         updated[index].video_file = uri;
@@ -202,7 +189,7 @@ export default function EditModuleScreen({ route, navigation }) {
         setLessons(updated);
       }
     } catch (err) {
-      console.error("[EDIT-MODS] Error en video picker:", err);
+      console.error("Error en video picker:", err);
       Toast.show({
         type: "error",
         text1: "Error al seleccionar video",
@@ -211,48 +198,53 @@ export default function EditModuleScreen({ route, navigation }) {
     }
   };
 
-  // =====================================================
-  // 🔹 Eliminar lección
-  // =====================================================
-  const deleteLesson = async (index) => {
-    const lesson = lessons[index];
+ const deleteLesson = async (index) => {
+  //Evitar eliminar el último módulo
+  if (lessons.length <= 1) {
+    Toast.show({
+      type: "info",
+      text1: "Debe quedar al menos un módulo",
+      text2: "No podés eliminar todos los módulos del curso.",
+    });
+    return;
+  }
 
-    // Si es nueva (no guardada), solo removerla del estado
-    if (lesson.isNew) {
-      setLessons((prev) => prev.filter((_, i) => i !== index));
-      return;
-    }
+  const lesson = lessons[index];
 
-    // Si ya existe en DB, eliminarla
-    try {
-      const res = await fetch(`${COURSES_URL}/${course.id}/lessons/${lesson.id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      });
+  // Si es nueva (no guardada), solo removerla del estado
+  if (lesson.isNew) {
+    setLessons((prev) => prev.filter((_, i) => i !== index));
+    return;
+  }
 
-      if (!res.ok) throw new Error("Error al eliminar módulo");
+  // Si ya existe en DB, eliminarla
+  try {
+    const res = await fetch(`${COURSES_URL}/${course.id}/lessons/${lesson.id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+    });
 
-      Toast.show({
-        type: "success",
-        text1: "Módulo eliminado",
-      });
+    if (!res.ok) throw new Error("Error al eliminar módulo");
 
-      setLessons((prev) => prev.filter((_, i) => i !== index));
-    } catch (err) {
-      console.error("[EDIT-MODS] Error eliminando lección:", err);
-      Toast.show({
-        type: "error",
-        text1: "Error al eliminar",
-        text2: err.message,
-      });
-    }
-  };
+    Toast.show({
+      type: "success",
+      text1: "Módulo eliminado",
+    });
 
-  // =====================================================
-  // 🔹 Guardar cambios
-  // =====================================================
+    setLessons((prev) => prev.filter((_, i) => i !== index));
+  } catch (err) {
+    console.error("Error eliminando lección:", err);
+    Toast.show({
+      type: "error",
+      text1: "Error al eliminar",
+      text2: err.message,
+    });
+  }
+};
+
+  //Guardar cambios
   const handleSave = async () => {
     try {
       // Validación básica
@@ -275,11 +267,11 @@ export default function EditModuleScreen({ route, navigation }) {
       }
 
       setSaving(true);
-      console.log(`[EDIT-MODS] Guardando ${lessons.length} lecciones…`);
+      console.log(`Guardando ${lessons.length} lecciones…`);
 
       for (let i = 0; i < lessons.length; i++) {
         const lesson = lessons[i];
-        console.log(`[EDIT-MODS] Procesando lección ${i + 1}/${lessons.length}:`, lesson.title);
+        console.log(`Procesando lección ${i + 1}/${lessons.length}:`, lesson.title);
 
         // Subir video si es nuevo archivo local/blob
         let videoUrlFinal = lesson.video_url;
@@ -290,9 +282,9 @@ export default function EditModuleScreen({ route, navigation }) {
         );
 
         if (needsUpload) {
-          console.log(`[EDIT-MODS] 📤 Subiendo video de lección ${i + 1}...`);
+          console.log(`Subiendo video de lección ${i + 1}...`);
           videoUrlFinal = await uploadFile(lesson.video_file);
-          console.log(`[EDIT-MODS] ✅ Video ${i + 1} subido:`, videoUrlFinal);
+          console.log(`Video ${i + 1} subido:`, videoUrlFinal);
         }
 
         const payload = {
@@ -302,11 +294,11 @@ export default function EditModuleScreen({ route, navigation }) {
           order_index: i + 1,
         };
 
-        console.log(`[EDIT-MODS] 📦 Payload lección ${i + 1}:`, payload);
+        console.log(`Payload lección ${i + 1}:`, payload);
 
         // Si es nueva, crearla
         if (lesson.isNew) {
-          console.log(`[EDIT-MODS] ➕ Creando nueva lección...`);
+          console.log(`Creando nueva lección...`);
           const res = await fetch(`${COURSES_URL}/${course.id}/lessons`, {
             method: "POST",
             headers: {
@@ -320,10 +312,10 @@ export default function EditModuleScreen({ route, navigation }) {
             const errData = await res.json();
             throw new Error(errData?.error || "Error al crear módulo");
           }
-          console.log(`[EDIT-MODS] ✅ Lección ${i + 1} creada`);
+          console.log(`Lección ${i + 1} creada`);
         } else {
           // Si existe, actualizarla
-          console.log(`[EDIT-MODS] 🔄 Actualizando lección existente...`);
+          console.log(`Actualizando lección existente...`);
           const res = await fetch(`${COURSES_URL}/${course.id}/lessons/${lesson.id}`, {
             method: "PATCH",
             headers: {
@@ -337,7 +329,7 @@ export default function EditModuleScreen({ route, navigation }) {
             const errData = await res.json();
             throw new Error(errData?.error || "Error al actualizar módulo");
           }
-          console.log(`[EDIT-MODS] ✅ Lección ${i + 1} actualizada`);
+          console.log(`Lección ${i + 1} actualizada`);
         }
       }
 
@@ -349,7 +341,7 @@ export default function EditModuleScreen({ route, navigation }) {
 
       navigation.goBack();
     } catch (err) {
-      console.error("[EDIT-MODS] ❌ Error guardando módulos:", err.message);
+      console.error("Error guardando módulos:", err.message);
       Toast.show({
         type: "error",
         text1: "Error al guardar",
@@ -360,9 +352,7 @@ export default function EditModuleScreen({ route, navigation }) {
     }
   };
 
-  // =====================================================
-  // 🧭 Render
-  // =====================================================
+
   if (loading) {
     return (
       <View style={styles.loader}>
@@ -373,6 +363,7 @@ export default function EditModuleScreen({ route, navigation }) {
   }
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#ffffffff" }}>
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -446,12 +437,11 @@ export default function EditModuleScreen({ route, navigation }) {
         </TouchableOpacity>
       </ScrollView>
     </View>
+    </SafeAreaView>
   );
 }
 
-// =====================================================
-// 🎨 ESTILOS
-// =====================================================
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8FAFB" },
   header: {

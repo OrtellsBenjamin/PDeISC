@@ -9,8 +9,11 @@
     "newArchEnabled": true,
     "scheme": "onlearn",
     "extra": {
-      "supabaseUrl": "https://sihlbryyokpepujxatut.supabase.co",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpaGxicnl5b2twZXB1anhhdHV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzOTk0MzksImV4cCI6MjA3Njk3NTQzOX0.jm-E6wcMBycdRoCS3xyOVslE0YvAx29N1qX10iwgWSY"
+      "EXPO_PUBLIC_SUPABASE_URL": "https://sihlbryyokpepujxatut.supabase.co",
+      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpaGxicnl5b2twZXB1anhhdHV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzOTk0MzksImV4cCI6MjA3Njk3NTQzOX0.jm-E6wcMBycdRoCS3xyOVslE0YvAx29N1qX10iwgWSY",
+      "eas": {
+        "projectId": "9ef7ee2c-6807-4f91-af80-07772d9b4f63"
+      }
     },
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -27,15 +30,18 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.cursos.app",
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": []
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "expo-dev-client",
       "react-native-video",
       "expo-web-browser",
       "expo-font"
-    ]
+    ],
+    "owner": "benja26"
   }
 }

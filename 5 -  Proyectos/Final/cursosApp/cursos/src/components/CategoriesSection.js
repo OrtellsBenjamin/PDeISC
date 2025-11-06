@@ -14,10 +14,13 @@ import { useNavigation } from "@react-navigation/native";
 export default function CategoriesSection() {
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
+
+  // Detecta el tipo de dispositivo según el ancho de pantalla
   const isMobile = width <= 700;
   const isTablet = width > 700 && width <= 1024;
   const cardsPerRow = isMobile ? 1 : isTablet ? 2 : 4;
 
+  // Lista de categorías disponibles
   const categories = [
     {
       id: 1,
@@ -49,21 +52,24 @@ export default function CategoriesSection() {
     },
   ];
 
+  // Navega a la pantalla de cursos filtrando por categoría
   const handleCategoryPress = (categoryName) => {
-    
-    // Navega al AllCoursesScreen y pasa la categoría
     navigation.navigate("AllCourses", { selectedCategory: categoryName });
   };
 
   return (
     <View style={styles.wrapper}>
+      {/* Título principal */}
       <Text style={styles.title}>
         Explora por <Text style={styles.titleHighlight}>Categoría</Text>
       </Text>
+
+      {/* Subtítulo descriptivo */}
       <Text style={styles.subtitle}>
         Descubrí los cursos más destacados según tu área de interés.
       </Text>
 
+      {/* Contenedor de tarjetas de categorías */}
       <View
         style={[
           styles.grid,
@@ -71,9 +77,11 @@ export default function CategoriesSection() {
         ]}
       >
         {categories.map((cat) => {
+          // Animaciones de hover y escala
           const scaleAnim = useRef(new Animated.Value(1)).current;
           const hoverAnim = useRef(new Animated.Value(0)).current;
 
+          // Efecto al pasar el mouse (solo web)
           const handleHoverIn = () => {
             Animated.parallel([
               Animated.timing(scaleAnim, {
@@ -89,6 +97,7 @@ export default function CategoriesSection() {
             ]).start();
           };
 
+          // Efecto al sacar el mouse
           const handleHoverOut = () => {
             Animated.parallel([
               Animated.timing(scaleAnim, {
@@ -104,6 +113,7 @@ export default function CategoriesSection() {
             ]).start();
           };
 
+          // Colores del botón según la animación
           const buttonBackground = hoverAnim.interpolate({
             inputRange: [0, 1],
             outputRange: ["#EAF3F2", "#FF7A00"],
@@ -127,10 +137,14 @@ export default function CategoriesSection() {
                 },
               ]}
             >
+              {/* Imagen de la categoría */}
               <Image source={cat.image} style={styles.icon} />
+
+              {/* Nombre y descripción */}
               <Text style={styles.categoryName}>{cat.name}</Text>
               <Text style={styles.description}>{cat.description}</Text>
 
+              {/* Botón animado */}
               <TouchableOpacity
                 onPress={() => handleCategoryPress(cat.name)}
                 activeOpacity={0.9}
