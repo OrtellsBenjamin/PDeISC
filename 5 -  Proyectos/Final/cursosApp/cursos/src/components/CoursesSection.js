@@ -18,10 +18,9 @@ export default function CoursesSection() {
 
   const isMobile = width <= 700;
   const isTablet = width > 700 && width <= 1024;
-  const cardsPerRow = isMobile ? 1 : isTablet ? 2 : 3; 
+  const cardsPerRow = isMobile ? 1 : isTablet ? 2 : 3;
 
   const API_URL = "https://onlearn-api.onrender.com/api/courses/popular";
-
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -93,9 +92,9 @@ export default function CoursesSection() {
           >
             <Image
               source={{
-                uri:
-                  course.image_url ||
-                  "https://placehold.co/600x400?text=Sin+imagen",
+                uri: course.image_url
+                  ? `${course.image_url}?v=${Date.now()}`
+                  : "https://placehold.co/600x400?text=Sin+imagen",
               }}
               style={styles.courseImage}
               resizeMode="cover"
@@ -122,7 +121,6 @@ export default function CoursesSection() {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   wrapper: {

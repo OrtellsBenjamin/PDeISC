@@ -24,8 +24,13 @@ export default function CoursePlayerScreen({ route, navigation }) {
   const { session } = useContext(AuthContext);
   const [lessons, setLessons] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [progress, setProgress] = useState(0); // %
+  const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  //
+  const [currentTime, setCurrentTime] = useState(0);
+  const lastSeekRef = useRef(0);
+
   const playerRef = useRef(null);
 
   const API_BASE = "https://onlearn-api.onrender.com/api";
@@ -136,8 +141,17 @@ export default function CoursePlayerScreen({ route, navigation }) {
 
   const currentLesson = lessons[currentIndex];
 
-  //componente sidebar móvil
+  const handleProgress = (data) => {
+    setCurrentTime(data.currentTime);
+  };
+  const handleSeek = (e) => {
+    // Algunas implementaciones reportan e.currentTime; si no, aceptar e.seekTime
+    const t = e?.currentTime ?? e?.seekTime ?? 0;
+    lastSeekRef.current = t;
+    setCurrentTime(t);
+  };
 
+  //componente sidebar móvil
   const MobileSidebar = () => (
     <View style={styles.mobileSidebar}>
       <Text style={styles.sidebarTitle}>Temario</Text>
@@ -178,7 +192,7 @@ export default function CoursePlayerScreen({ route, navigation }) {
     </View>
   );
 
-//componente sidebar escritorio
+  //componente sidebar escritorio
   const DesktopSidebar = () => (
     <ScrollView
       style={styles.desktopSidebar}
@@ -231,6 +245,7 @@ export default function CoursePlayerScreen({ route, navigation }) {
       {/* Video */}
       <View style={styles.mobileVideoContainer}>
         <Video
+          key={currentLesson?.id || currentIndex} // remount limpio al cambiar lección
           ref={playerRef}
           source={{ uri: currentLesson.video_url }}
           style={{
@@ -242,6 +257,9 @@ export default function CoursePlayerScreen({ route, navigation }) {
           }}
           resizeMode="contain"
           controls
+          onProgress={handleProgress}
+          onSeek={handleSeek}
+          progressUpdateInterval={500}
         />
       </View>
 
@@ -256,6 +274,7 @@ export default function CoursePlayerScreen({ route, navigation }) {
       {/* Video izquierda */}
       <View style={styles.desktopVideoContainer}>
         <Video
+          key={currentLesson?.id || currentIndex}
           ref={playerRef}
           source={{ uri: currentLesson.video_url }}
           style={{
@@ -266,6 +285,9 @@ export default function CoursePlayerScreen({ route, navigation }) {
           }}
           resizeMode="contain"
           controls
+          onProgress={handleProgress}
+          onSeek={handleSeek}
+          progressUpdateInterval={500}
         />
       </View>
 
@@ -274,7 +296,6 @@ export default function CoursePlayerScreen({ route, navigation }) {
     </View>
   );
 
- 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
@@ -299,8 +320,6 @@ const styles = StyleSheet.create({
   },
   backText: { fontSize: 16, fontWeight: "600", color: "#0B7077", marginLeft: 6 },
 
-
-
   mobileScroll: { flex: 1, backgroundColor: "#F8FAFB" },
   mobileVideoContainer: {
     alignItems: "center",
@@ -315,7 +334,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: 16,
-    marginTop: "70%",
+    marginTop: Platform.select({ ios: 24, android: 24, default: "40%" }),
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -323,7 +342,6 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 
-  
   desktopLayout: {
     flex: 1,
     flexDirection: "row",
@@ -350,7 +368,6 @@ const styles = StyleSheet.create({
     maxHeight: "90%",
   },
 
- 
   sidebarTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -378,8 +395,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 15,
   },
-
-
 
   progressContainer: {
     width: "100%",

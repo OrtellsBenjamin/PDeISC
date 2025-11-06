@@ -92,7 +92,7 @@ export default function LoginScreen() {
         return;
       }
 
-      // ✅ Si el login fue exitoso, no esperamos al evento global
+      //Si el login fue exitoso, no esperamos al evento global
       setPendingRedirect(true);
       setEmailLoginOK(true);
     } catch (e) {
@@ -121,7 +121,7 @@ export default function LoginScreen() {
           routes: [{ name: HOME_ROUTE }],
         });
         setIsSubmitting(false);
-      }, 700); // ⚡ más rápida la navegación
+      }, 700); 
 
       return () => clearTimeout(t);
     }
@@ -132,7 +132,7 @@ export default function LoginScreen() {
     setIsSubmitting(true);
     try {
       await signInWithGoogle();
-      // ⚠️ En web redirige; en móvil vuelve por deep link.
+      //En web redirige; en móvil vuelve por deep link.
       // Si el usuario cancela, abajo se re-habilita con el Toast de cancel.
       setTimeout(() => setIsSubmitting(false), 1500);
     } catch (e) {
@@ -157,145 +157,185 @@ export default function LoginScreen() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={{ flexGrow: 1 }}
-      style={{ backgroundColor: "#D2E6E4" }}
-    >
-      <BackButton />
+  <ScrollView
+    contentContainerStyle={{ flexGrow: 1 }}
+    style={{ backgroundColor: "#D2E6E4" }}
+  >
+    <BackButton />
 
-      <View style={styles.container}>
-        {!fontsLoaded ? (
-          <View
-            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-          >
-            <Text style={{ color: "#0B7077", fontWeight: "700", fontSize: 16 }}>
-              Cargando fuentes...
-            </Text>
-          </View>
-        ) : (
-          <View
+    <View style={styles.container}>
+      {!fontsLoaded ? (
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <Text style={{ color: "#0B7077", fontWeight: "700", fontSize: 16 }}>
+            Cargando fuentes...
+          </Text>
+        </View>
+      ) : (
+        <View
+          style={[
+            styles.responsiveLayout,
+            {
+              flexDirection: isMobile ? "row" : "row",
+              alignItems: "center",
+              justifyContent: "center",
+            },
+          ]}
+        >
+          <Animated.View
             style={[
-              styles.responsiveLayout,
+              styles.card,
               {
-                flexDirection: isMobile ? "row" : "row",
-                alignItems: "center",
-                justifyContent: "center",
+                opacity: fadeAnim,
+                transform: [{ scale: scaleAnim }],
+                width: isMobile ? "90%" : 400,
+                marginBottom: isMobile ? 30 : 0,
               },
             ]}
           >
-            <Animated.View
+            <Text style={styles.title}>Iniciar sesión</Text>
+            <Text style={styles.subtitle}>Bienvenido a Onlearn</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Correo electrónico"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              placeholderTextColor="#888"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Contraseña"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              placeholderTextColor="#888"
+            />
+
+            <TouchableOpacity
+              style={[styles.loginButton, isSubmitting && { opacity: 0.6 }]}
+              onPress={onLogin}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.loginText}>
+                {isSubmitting ? "Ingresando..." : "Ingresar"}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.separatorContainer}>
+              <View style={styles.separatorLine} />
+              <Text style={styles.separatorText}>o</Text>
+              <View style={styles.separatorLine} />
+            </View>
+
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={handleGoogleLogin}
+              activeOpacity={0.85}
+              disabled={isSubmitting}
+            >
+              <Ionicons
+                name="logo-google"
+                size={20}
+                color="#fff"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles.googleText}>Iniciar sesión con Google</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={[
-                styles.card,
+                styles.googleButton,
+                { backgroundColor: "#24292e", marginTop: 10 },
+                isSubmitting && { opacity: 0.6 },
+              ]}
+              onPress={handleGitHubLogin}
+              activeOpacity={0.85}
+              disabled={isSubmitting}
+            >
+              <Ionicons
+                name="logo-github"
+                size={20}
+                color="#fff"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles.googleText}>Continuar con GitHub</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Register")}
+              activeOpacity={0.7}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.linkText}>
+                ¿No tenés cuenta?{" "}
+                <Text style={styles.highlight}>Creá una ahora</Text>
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
+
+          <View style={{ alignItems: "center", justifyContent: "center" }}>
+            <Image
+              source={require("../../assets/Teacher.png")}
+              style={[
+                styles.sideImage,
                 {
-                  opacity: fadeAnim,
-                  transform: [{ scale: scaleAnim }],
-                  width: isMobile ? "90%" : 400,
-                  marginBottom: isMobile ? 30 : 0,
+                  width: isMobile ? 280 : 420,
+                  height: isMobile ? 240 : 420,
+                  marginTop: isMobile ? 0 : 0,
+                  marginBottom: isMobile ? 40 : 0,
                 },
               ]}
-            >
-              <Text style={styles.title}>Iniciar sesión</Text>
-              <Text style={styles.subtitle}>Bienvenido a Onlearn</Text>
-
-              <TextInput
-                style={styles.input}
-                placeholder="Correo electrónico"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                placeholderTextColor="#888"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Contraseña"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                placeholderTextColor="#888"
-              />
-
-              <TouchableOpacity
-                style={[styles.loginButton, isSubmitting && { opacity: 0.6 }]}
-                onPress={onLogin}
-                disabled={isSubmitting}
-              >
-                <Text style={styles.loginText}>
-                  {isSubmitting ? "Ingresando..." : "Ingresar"}
-                </Text>
-              </TouchableOpacity>
-
-              <View style={styles.separatorContainer}>
-                <View style={styles.separatorLine} />
-                <Text style={styles.separatorText}>o</Text>
-                <View style={styles.separatorLine} />
-              </View>
-
-              <TouchableOpacity
-                style={styles.googleButton}
-                onPress={handleGoogleLogin}
-                activeOpacity={0.85}
-                disabled={isSubmitting}
-              >
-                <Ionicons
-                  name="logo-google"
-                  size={20}
-                  color="#fff"
-                  style={{ marginRight: 8 }}
-                />
-                <Text style={styles.googleText}>Iniciar sesión con Google</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.googleButton,
-                  { backgroundColor: "#24292e", marginTop: 10 },
-                  isSubmitting && { opacity: 0.6 },
-                ]}
-                onPress={handleGitHubLogin}
-                activeOpacity={0.85}
-                disabled={isSubmitting}
-              >
-                <Ionicons
-                  name="logo-github"
-                  size={20}
-                  color="#fff"
-                  style={{ marginRight: 8 }}
-                />
-                <Text style={styles.googleText}>Continuar con GitHub</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => navigation.navigate("Register")}
-                activeOpacity={0.7}
-                disabled={isSubmitting}
-              >
-                <Text style={styles.linkText}>
-                  ¿No tenés cuenta?{" "}
-                  <Text style={styles.highlight}>Creá una ahora</Text>
-                </Text>
-              </TouchableOpacity>
-            </Animated.View>
-
-            <View style={{ alignitems: "center", justifyContent: "center" }}>
-              <Image
-                source={require("../../assets/Teacher.png")}
-                style={[
-                  styles.sideImage,
-                  {
-                    width: isMobile ? 280 : 420,
-                    height: isMobile ? 240 : 420,
-                    marginTop: isMobile ? 0 : 0,
-                    marginBottom: isMobile ? 40 : 0,
-                  },
-                ]}
-                resizeMode="contain"
-              />
-            </View>
+              resizeMode="contain"
+            />
           </View>
-        )}
-      </View>
-    </ScrollView>
-  );
+        </View>
+      )}
+
+      {/*Overlay centrado cuando se está logueando */}
+      {isSubmitting && (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: "rgba(255,255,255,0.6)",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 999,
+            },
+          ]}
+        >
+          <View
+            style={{
+              backgroundColor: "#fff",
+              paddingVertical: 20,
+              paddingHorizontal: 30,
+              borderRadius: 12,
+              elevation: 6,
+              shadowColor: "#000",
+              shadowOpacity: 0.2,
+              shadowRadius: 6,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "700",
+                color: "#0B7077",
+                textAlign: "center",
+              }}
+            >
+              Iniciando sesión...
+            </Text>
+          </View>
+        </View>
+      )}
+    </View>
+  </ScrollView>
+);
+
 }
 
 const styles = StyleSheet.create({

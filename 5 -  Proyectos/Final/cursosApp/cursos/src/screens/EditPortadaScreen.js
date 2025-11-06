@@ -1,4 +1,3 @@
-
 import React, { useContext, useState, useEffect } from "react";
 import {
   View,
@@ -15,13 +14,15 @@ import * as ImagePicker from "expo-image-picker";
 import Toast from "react-native-toast-message";
 import { Ionicons } from "@expo/vector-icons";
 import { AuthContext } from "../context/AuthContext";
+import BackButton from "../components/BackButton";
+import { Platform } from "react-native";
 
 export default function EditPortadaScreen({ route, navigation }) {
   const { session } = useContext(AuthContext);
   const { course } = route.params || {};
   const { width } = useWindowDimensions();
 
-const API_BASE = "https://onlearn-api.onrender.com/api";
+  const API_BASE = "https://onlearn-api.onrender.com/api";
   const COURSES_URL = `${API_BASE}/courses`;
   const UPLOAD_FILE_URL = `${API_BASE}/upload`;
 
@@ -33,7 +34,14 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  //Toast responsive
+  const getImageUri = (url) => {
+    if (!url) return url;
+    if (url.startsWith('file://')) return url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) return url;
+    const baseUrl = url.split('?')[0];
+    return `${baseUrl}?t=${Date.now()}`;
+  };
+
   const showToast = (type, text1, text2 = "") => {
     const isMobile = width < 700;
     Toast.show({
@@ -54,7 +62,6 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
     });
   };
 
-  //Helpers upload
   const guessMimeFromUri = (uri) => {
     const lower = (uri || "").toLowerCase();
     if (lower.endsWith(".png")) return "image/png";
@@ -74,7 +81,9 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
 
   const uploadFile = async (uri) => {
     const form = new FormData();
-    const name = fileNameFromUri(uri, "portada.jpg");
+    const randomId = Math.random().toString(36).substring(2, 9);
+    const timestamp = Date.now();
+    const name = `portada-${timestamp}-${randomId}.jpg`;
     const type = guessMimeFromUri(uri);
 
     form.append("file", { uri, name, type });
@@ -94,8 +103,6 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
     return data.url;
   };
 
-  //Cargar categorías
-
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -108,8 +115,6 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
     };
     fetchCategories();
   }, []);
-
-  // Seleccionar imagen
 
   const handleImagePicker = async () => {
     try {
@@ -125,9 +130,6 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
       showToast("error", "No se pudo abrir la galería");
     }
   };
-
-
-  //Validaciones
 
   const handleTitleChange = (value) => {
     if (value.length > 80) {
@@ -163,8 +165,6 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
     }
   };
 
- 
-  //Guardar cambios (PATCH)
   const handleSaveChanges = async () => {
     try {
       if (!title || !description || !price || !category_id) {
@@ -179,8 +179,11 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
       setLoading(true);
 
       let finalImageUrl = image_url;
+      
       if (image_url.startsWith("file:")) {
         finalImageUrl = await uploadFile(image_url);
+      } else {
+        finalImageUrl = image_url.split('?')[0];
       }
 
       const payload = {
@@ -213,9 +216,9 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
     }
   };
 
-  //Render principal
   return (
     <ScrollView style={styles.container}>
+      <BackButton style={styles.BackAbsolute} onPress={() => navigation.goBack()} />
       <Text style={styles.headerTitle}>Editar Portada</Text>
 
       <Text style={styles.label}>Título del curso</Text>
@@ -269,7 +272,11 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
 
       <TouchableOpacity style={styles.imagePicker} onPress={handleImagePicker}>
         {image_url ? (
-          <Image source={{ uri: image_url }} style={styles.previewImage} />
+          <Image 
+            source={{ uri: getImageUri(image_url) }}
+            style={styles.previewImage}
+            key={image_url}
+          />
         ) : (
           <Text style={styles.imageText}>Seleccionar imagen</Text>
         )}
@@ -286,8 +293,6 @@ const API_BASE = "https://onlearn-api.onrender.com/api";
   );
 }
 
-//Estilos
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8FAFB", padding: 20 },
   headerTitle: {
@@ -296,6 +301,8 @@ const styles = StyleSheet.create({
     color: "#0B7077",
     textAlign: "center",
     marginBottom: 16,
+    marginTop:Platform.select({ web: 20, android: 45, ios: 0 }),
+    marginLeft:Platform.select({ web: 0, android: 40, ios: 0 }),
   },
   label: {
     fontWeight: "600",
@@ -333,6 +340,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+  BackAbsolute: {
+      position: "absolute",
+      left: 0,
+      marginTop: Platform.select({ web: 0, android: 50, ios: 50 }),
+    },
   categoryChip: {
     borderWidth: 1,
     borderColor: "#0B7077",

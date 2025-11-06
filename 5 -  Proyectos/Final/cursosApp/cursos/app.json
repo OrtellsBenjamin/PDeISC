@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "scheme": "onlearn",
     "extra": {
       "EXPO_PUBLIC_SUPABASE_URL": "https://sihlbryyokpepujxatut.supabase.co",
@@ -37,7 +37,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-dev-client",
+      
       "react-native-video",
       "expo-web-browser",
       "expo-font"

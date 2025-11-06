@@ -1,16 +1,11 @@
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 
-/**
-
-  @param {string} baseUrl 
- */
-export default function useUploadMedia(baseUrl = "https://onlearn-api.onrender.com:4000") {
+export default function useUploadMedia(baseUrl = "https://onlearn-api.onrender.com") {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Seleccionar y subir archivo
-  const pickAndUpload = async (type = "image", folder = "images") => {
+  const pickAndUpload = async (type = "image", folder = "images", token = null) => {
     try {
       setUploading(true);
       setError(null);
@@ -32,15 +27,27 @@ export default function useUploadMedia(baseUrl = "https://onlearn-api.onrender.c
       const asset = result.assets[0];
       const uri = asset.uri;
       const mime = asset.mimeType || (type === "video" ? "video/mp4" : "image/jpeg");
-      const name = `${Date.now()}-${type === "video" ? "video.mp4" : "image.jpg"}`;
+      
+      const randomId = Math.random().toString(36).substring(2, 9);
+      const timestamp = Date.now();
+      const extension = type === "video" ? "mp4" : "jpg";
+      const name = `${folder}-${timestamp}-${randomId}.${extension}`;
 
-      //Enviar al backend
       const formData = new FormData();
       formData.append("file", { uri, type: mime, name });
-      formData.append("folder", folder); /
+      formData.append("folder", folder);
+
+      const headers = {
+        "Content-Type": "multipart/form-data",
+      };
+      
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
 
       const response = await fetch(`${baseUrl}/api/upload`, {
         method: "POST",
+        headers,
         body: formData,
       });
 

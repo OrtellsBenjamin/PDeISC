@@ -1,9 +1,8 @@
+
 import { Platform } from "react-native";
 
-// Hook personalizado para manejar la carga de archivos (imágenes o videos)
 export default function useUploadHelper(UPLOAD_FILE_URL, session) {
   
-  // Detecta el tipo MIME según la extensión del archivo
   const guessMimeFromUri = (uri, kind) => {
     const lower = (uri || "").toLowerCase();
     if (kind === "image") {
@@ -18,7 +17,13 @@ export default function useUploadHelper(UPLOAD_FILE_URL, session) {
     return "video/mp4";
   };
 
-  // Obtiene el nombre del archivo a partir de la URI
+  const generateUniqueFileName = (kind) => {
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(2, 9);
+    const extension = kind === "image" ? "jpg" : "mp4";
+    return `${kind}-${timestamp}-${randomId}.${extension}`;
+  };
+
   const fileNameFromUri = (uri, fallback) => {
     try {
       const parts = uri.split("/");
@@ -29,20 +34,17 @@ export default function useUploadHelper(UPLOAD_FILE_URL, session) {
     }
   };
 
-  // Convierte un blob en un objeto File (solo para entorno web)
   const blobToFile = async (blobUri, fileName, mimeType) => {
     const response = await fetch(blobUri);
     const blob = await response.blob();
     return new File([blob], fileName, { type: mimeType });
   };
 
-  // Realiza la carga del archivo al servidor
   const uploadFile = async (uri, kind) => {
     const form = new FormData();
-    const name = fileNameFromUri(uri, kind === "image" ? "portada.jpg" : "video.mp4");
+    const name = generateUniqueFileName(kind);
     const type = guessMimeFromUri(uri, kind);
 
-    // Maneja carga en web y en dispositivos nativos
     if (Platform.OS === "web" && uri.startsWith("blob:")) {
       const file = await blobToFile(uri, name, type);
       form.append("file", file);
@@ -50,10 +52,8 @@ export default function useUploadHelper(UPLOAD_FILE_URL, session) {
       form.append("file", { uri, name, type });
     }
 
-    // Define la carpeta de destino según el tipo de archivo
     form.append("folder", kind === "image" ? "images" : "videos");
 
-    // Envia el archivo al endpoint configurado
     const res = await fetch(UPLOAD_FILE_URL, {
       method: "POST",
       headers: {
@@ -63,7 +63,6 @@ export default function useUploadHelper(UPLOAD_FILE_URL, session) {
       body: form,
     });
 
-    // Procesa la respuesta
     const data = await res.json();
     if (!res.ok || !data?.url) {
       throw new Error(data?.error || `No se pudo subir el ${kind}.`);
@@ -72,6 +71,5 @@ export default function useUploadHelper(UPLOAD_FILE_URL, session) {
     return data.url;
   };
 
-  // Devuelve las funciones disponibles para otros componentes
   return { uploadFile, fileNameFromUri };
 }

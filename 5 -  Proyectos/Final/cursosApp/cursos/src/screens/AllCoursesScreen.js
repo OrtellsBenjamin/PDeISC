@@ -12,7 +12,6 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import BackButton from "../components/BackButton";
 
-
 export default function AllCoursesScreen({ navigation, route }) {
   const [courses, setCourses] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -21,7 +20,7 @@ export default function AllCoursesScreen({ navigation, route }) {
   const [loadingCats, setLoadingCats] = useState(true);
   const { width } = useWindowDimensions();
 
-const API_URL = "https://onlearn-api.onrender.com/api";
+  const API_URL = "https://onlearn-api.onrender.com/api";
 
   //Obtener categorías
   const fetchCategories = async () => {
@@ -59,8 +58,7 @@ const API_URL = "https://onlearn-api.onrender.com/api";
     if (route?.params?.selectedCategory && categories.length > 0) {
       const found = categories.find(
         (c) =>
-          c.name.toLowerCase() ===
-          route.params.selectedCategory.toLowerCase()
+          c.name.toLowerCase() === route.params.selectedCategory.toLowerCase()
       );
       if (found) setSelectedCategory(found.id);
     }
@@ -82,25 +80,34 @@ const API_URL = "https://onlearn-api.onrender.com/api";
     );
   }
 
-
   return (
     <ScrollView style={styles.container}>
-
       <BackButton onPress={() => navigation.goBack()} />
 
       <Text style={styles.title}>Explorá nuestros Cursos</Text>
 
-   
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoryScroll}
+      >
         {categories.map((cat) => {
           const isActive = selectedCategory === cat.id;
           return (
             <TouchableOpacity
               key={cat.id}
-              style={[styles.categoryButton, isActive && styles.categoryButtonActive]}
+              style={[
+                styles.categoryButton,
+                isActive && styles.categoryButtonActive,
+              ]}
               onPress={() => setSelectedCategory(isActive ? null : cat.id)}
             >
-              <Text style={[styles.categoryText, isActive && styles.categoryTextActive]}>
+              <Text
+                style={[
+                  styles.categoryText,
+                  isActive && styles.categoryTextActive,
+                ]}
+              >
                 {cat.name}
               </Text>
             </TouchableOpacity>
@@ -108,8 +115,6 @@ const API_URL = "https://onlearn-api.onrender.com/api";
         })}
       </ScrollView>
 
-    
-    
       {filteredCourses.length === 0 ? (
         <Text style={styles.emptyText}>
           No hay cursos disponibles en esta categoría.
@@ -128,18 +133,19 @@ const API_URL = "https://onlearn-api.onrender.com/api";
                       ? "95%"
                       : numColumns === 2
                       ? "47%"
-                      : "31.5%", 
+                      : "31.5%",
                 },
               ]}
               onPress={() => navigation.navigate("CourseDetail", { course })}
             >
               <Image
                 source={{
-                  uri:
-                    course.image_url ||
-                    "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800",
+                  uri: course.image_url
+                    ? `${course.image_url}?v=${Date.now()}`
+                    : "https://placehold.co/600x400?text=Sin+imagen",
                 }}
                 style={styles.image}
+                resizeMode="cover"
               />
               <Text style={styles.courseTitle}>{course.title}</Text>
               <Text style={styles.description} numberOfLines={2}>
@@ -153,7 +159,6 @@ const API_URL = "https://onlearn-api.onrender.com/api";
     </ScrollView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -205,7 +210,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 16,
-    rowGap: 22, 
+    rowGap: 22,
   },
   card: {
     backgroundColor: "#fff",
