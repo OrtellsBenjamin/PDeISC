@@ -28,7 +28,7 @@ export default function AdminPanelScreen() {
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
-  const API_BASE = process.env.EXPO_PUBLIC_API_URL;
+ const API_URL = process.env.EXPO_PUBLIC_API_URL;
   // Obtener todos los cursos
   const fetchCourses = async () => {
     try {
