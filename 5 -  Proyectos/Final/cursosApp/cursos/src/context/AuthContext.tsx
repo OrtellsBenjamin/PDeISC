@@ -111,18 +111,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       const fetchPromise = (async (): Promise<Profile | null> => {
+
+        const attempt = async () => {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 8000);
+
+          try {
+            const { data, error } = await supabase
+              .from("profiles")
+              .select("id, full_name, role")
+              .eq("id", userId)
+              .maybeSingle({ signal: controller.signal });
+
+            clearTimeout(timeout);
+
+            if (error) throw error;
+            return data;
+          } catch (err) {
+            clearTimeout(timeout);
+            throw err;
+          }
+        };
+
         try {
           console.log(`[${TAG}] Obteniendo perfil para userId:`, userId);
-          
-          const { data, error } = await supabase
-            .from("profiles")
-            .select("id, full_name, role")
-            .eq("id", userId)
-            .maybeSingle();
 
-          if (error) {
-            console.error(`[${TAG}] Error al obtener perfil:`, error);
-            throw error;
+          let data = null;
+          for (let i = 0; i < 3; i++) {
+            try {
+              data = await attempt();
+              break;
+            } catch (err) {
+              await new Promise((res) =>
+                setTimeout(res, 400 + i * 300)
+              );
+            }
           }
 
           if (data) {
@@ -153,22 +176,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             role: roleFromMetadata,
           };
 
-          const { data: inserted, error: insErr } = await supabase
-            .from("profiles")
-            .insert([newProfile])
-            .select("id, full_name, role")
-            .single();
+          let inserted = null;
+          for (let i = 0; i < 3; i++) {
+            try {
+              const { data, error } = await supabase
+                .from("profiles")
+                .insert([newProfile])
+                .select("id, full_name, role")
+                .single();
 
-          if (insErr) {
-            console.error(`[${TAG}] Error al insertar perfil:`, insErr);
-            throw insErr;
+              if (error) throw error;
+              inserted = data;
+              break;
+            } catch (err) {
+              await new Promise((r) =>
+                setTimeout(r, 400 + i * 300)
+              );
+            }
           }
+
+          if (!inserted) throw new Error("No se pudo crear perfil");
 
           const prof = inserted as Profile;
           profileCache.current.set(userId, prof);
           setProfile(prof);
           console.log(`[${TAG}] Perfil creado:`, prof.full_name);
           return prof;
+
         } catch (e: any) {
           console.error(`[${TAG}] Excepción en fetchOrCreateProfile:`, e?.message);
           setProfile(null);
@@ -217,7 +251,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         console.log(`[${TAG}]Sesión OAuth establecida correctamente`);
 
-        // Redirigir manualmente tras login OAuth (solo móvil)
         if (Platform.OS !== "web") {
           setTimeout(() => {
             console.log(`[${TAG}]Redirigiendo a Home tras OAuth móvil`);
@@ -229,7 +262,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
 
-    // Procesar deep link si la app fue abierta desde uno
     Linking.getInitialURL().then((url) => {
       if (url) {
         console.log(`[${TAG}]Deep link inicial detectado:`, url);
@@ -237,7 +269,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     });
 
-    // Escuchar nuevos deep links
     const subscription = Linking.addEventListener("url", handleDeepLink);
 
     return () => {
@@ -403,19 +434,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setLoading(true);
 
       try {
-        //limpieza previa completa
         await supabase.auth.signOut({ scope: "local" });
         await new Promise((r) => setTimeout(r, 300));
         setSession(null);
         setProfile(null);
 
-        //Primer intento de login
         let { data, error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password: password.trim(),
         });
 
-        //Retry automático si da "Invalid login credentials" o error 400
         if (error && error.message.toLowerCase().includes("invalid")) {
           console.warn(`[${TAG}]Primer intento inválido, reintentando...`);
           await new Promise((r) => setTimeout(r, 600));
@@ -450,7 +478,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     [fetchOrCreateProfile]
   );
 
-  // Registrar nuevo usuario
   const signUpEmail = useCallback(
     async (
       email: string,
@@ -476,18 +503,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           return;
         }
 
-        // Si se registró correctamente
         if (data?.user) {
           const userId = data.user.id;
 
-          // Verificar si el perfil ya existe
           const { data: existingProfile } = await supabase
             .from("profiles")
             .select("id, full_name, role")
             .eq("id", userId)
             .maybeSingle();
 
-          // Si no existe, crear el perfil con su rol
           if (!existingProfile) {
             const name =
               data.user.user_metadata?.full_name ||
@@ -502,7 +526,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setProfile(existingProfile as Profile);
           }
 
-          // Si el registro devuelve sesión directa
           if (data.session) setSession(data.session);
         }
       } catch (err) {
@@ -514,13 +537,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     [fetchOrCreateProfile]
   );
 
-  // Iniciar sesión con Google
   const signInWithGoogle = useCallback(async () => {
     try {
       console.log(`[${TAG}] Iniciando sesión con Google...`);
       console.log(`[${TAG}] Plataforma detectada:`, Platform.OS);
 
-      // Si se ejecuta desde navegador web
       if (Platform.OS === "web") {
         const currentUrl =
           typeof window !== "undefined" ? window.location.origin : "";
@@ -543,11 +564,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
-      // Si se ejecuta desde app
       const redirectTo = "onlearn://auth/callback";
       console.log(`[${TAG}] RedirectTo en móvil:`, redirectTo);
 
-      // Solicita inicio de sesión con Google y obtiene URL de autorización
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -565,14 +584,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         throw error;
       }
 
-      // Verifica que Supabase devuelva una URL válida
       if (!data?.url) {
         throw new Error("Supabase no devolvió URL de redirección");
       }
 
       console.log(`[${TAG}] Abriendo navegador con URL:`, data.url);
 
-      // Abre navegador externo para completar el login de Google
       const result = await WebBrowser.openAuthSessionAsync(
         data.url,
         redirectTo
@@ -580,7 +597,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       console.log(`[${TAG}] Resultado del navegador:`, result);
 
-      // Verifica cómo se cerró la sesión de navegador
       if (result.type === "success") {
         console.log(`[${TAG}] Login completado con éxito`);
       } else if (result.type === "cancel") {
@@ -594,12 +610,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  //Iniciar sesión con GitHub
   const signInWithGitHub = useCallback(async () => {
     try {
       console.log(`[${TAG}] Iniciando sesión con GitHub...`);
 
-      //En navegador web
       if (Platform.OS === "web") {
         const currentUrl =
           typeof window !== "undefined" ? window.location.origin : "";
@@ -615,7 +629,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
-      //En movil
       const redirectTo = "onlearn://auth/callback";
       console.log(`[${TAG}] RedirectTo móvil:`, redirectTo);
 
@@ -699,7 +712,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  // Memoriza los valores del contexto de autenticación
   const value = useMemo(
     () => ({
       session,
@@ -711,7 +723,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       signInWithGitHub,
       loading,
     }),
-    // Se recalcula solo si cambia alguno de estos valores
     [
       session,
       profile,
@@ -724,7 +735,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     ]
   );
 
-  // Este useEffect solo muestra el estado actual en consola
   useEffect(() => {
     if (DEBUG) {
       console.log(`[${TAG}] Estado actual:`, {
@@ -737,6 +747,5 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [session, profile, loading]);
 
-  // Todo componente dentro de <AuthProvider> puede acceder al estado y funciones del contexto
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
