@@ -308,8 +308,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         if (mounted) {
           initComplete.current = true;
           setLoading(false);
-          //FORZAMOS que el overlay desaparezca después de 1 segundo
-          setTimeout(() => setLoading(false), 1000);
           snapshotStorage("init:end");
           console.log(`[${TAG}]Inicialización completada`);
         }
@@ -357,6 +355,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setProfile(null);
             break;
           }
+          if (!initComplete.current) {
+            console.log(`[${TAG}]INITIAL_SESSION durante init, ignorado`);
+            break;
+          }
           console.log(`[${TAG}]Procesando sesión inicial`);
           setSession(currentSession);
           await fetchOrCreateProfile(currentSession.user.id);
@@ -384,7 +386,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           } catch (e) {
             console.error(`[${TAG}]Error cargando perfil post-login:`, e);
           } finally {
-            setTimeout(() => setLoading(false), 800);
+            setLoading(false);
           }
           break;
 
