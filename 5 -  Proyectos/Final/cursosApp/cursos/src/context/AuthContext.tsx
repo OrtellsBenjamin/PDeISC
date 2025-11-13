@@ -105,11 +105,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       if (loadingProfileUserId.current === userId) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        if (profileCache.current.has(userId)) {
-          const cached = profileCache.current.get(userId)!;
-          setProfile(cached);
-          return cached;
+        for (let i = 0; i < 10; i++) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          if (profileCache.current.has(userId)) {
+            const cached = profileCache.current.get(userId)!;
+            setProfile(cached);
+            return cached;
+          }
         }
         return null;
       }
@@ -117,10 +119,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       loadingProfileUserId.current = userId;
 
       try {
-        const timeoutPromise = new Promise<null>((_, reject) =>
-          setTimeout(() => reject(new Error("Timeout al cargar perfil")), 45000)
-        );
-
         const attemptFetch = async (retry = 0): Promise<Profile | null> => {
           const { data, error } = await supabase
             .from("profiles")
@@ -130,7 +128,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
           if (error) throw error;
 
-          // Si el perfil ya existe → devolverlo
           if (data) {
             const prof = data as Profile;
             profileCache.current.set(userId, prof);
@@ -142,12 +139,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           const { data: userData } = await supabase.auth.getUser();
           const user = userData?.user;
 
-          // Determinar nombre real
           const fullName =
-            user?.user_metadata?.full_name || // registro normal
-            user?.user_metadata?.name || // Google OAuth
-            user?.user_metadata?.user_name || // GitHub OAuth
-            user?.email?.split("@")[0] || // fallback al email
+            user?.user_metadata?.full_name ||
+            user?.user_metadata?.name ||
+            user?.user_metadata?.user_name ||
+            user?.email?.split("@")[0] ||
             "Sin nombre";
 
       
@@ -181,13 +177,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           return prof;
         };
 
-        return await Promise.race([attemptFetch(), timeoutPromise]);
+        return await attemptFetch();
       } catch (e: any) {
         console.error(
           `[${TAG}] Excepción en fetchOrCreateProfile:`,
           e?.message
         );
-        //Eliminamos el Toast directo — solo log, sin mostrar error al usuario
         setProfile(null);
         return null;
       } finally {
@@ -265,8 +260,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       snapshotStorage("init:start");
 
       try {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
         const {
           data: { session: currentSession },
           error,
