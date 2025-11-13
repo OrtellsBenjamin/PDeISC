@@ -91,51 +91,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [pendingRedirect, setPendingRedirect] = useState<boolean>(false);
 
   const initComplete = useRef(false);
-  const loadingProfileUserId = useRef<string | null>(null);
   const isSigningOut = useRef(false);
   //Una vez que cargue el perfil, lo toma del cache
   const profileCache = useRef<Map<string, Profile>>(new Map());
+  const fetchingProfiles = useRef<Map<string, Promise<Profile | null>>>(new Map());
 
   const fetchOrCreateProfile = useCallback(
     async (userId: string): Promise<Profile | null> => {
       if (profileCache.current.has(userId)) {
         const cached = profileCache.current.get(userId)!;
         setProfile(cached);
+        console.log(`[${TAG}] Perfil desde cache:`, cached.full_name);
         return cached;
       }
 
-      if (loadingProfileUserId.current === userId) {
-        for (let i = 0; i < 10; i++) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-          if (profileCache.current.has(userId)) {
-            const cached = profileCache.current.get(userId)!;
-            setProfile(cached);
-            return cached;
-          }
-        }
-        return null;
+      if (fetchingProfiles.current.has(userId)) {
+        console.log(`[${TAG}] Esperando fetch existente para userId:`, userId);
+        return fetchingProfiles.current.get(userId)!;
       }
 
-      loadingProfileUserId.current = userId;
-
-      try {
-        const attemptFetch = async (retry = 0): Promise<Profile | null> => {
+      const fetchPromise = (async (): Promise<Profile | null> => {
+        try {
+          console.log(`[${TAG}] Obteniendo perfil para userId:`, userId);
+          
           const { data, error } = await supabase
             .from("profiles")
             .select("id, full_name, role")
             .eq("id", userId)
             .maybeSingle();
 
-          if (error) throw error;
+          if (error) {
+            console.error(`[${TAG}] Error al obtener perfil:`, error);
+            throw error;
+          }
 
           if (data) {
             const prof = data as Profile;
             profileCache.current.set(userId, prof);
             setProfile(prof);
+            console.log(`[${TAG}] Perfil encontrado:`, prof.full_name);
             return prof;
           }
 
-        
+          console.log(`[${TAG}] Perfil no existe, creando nuevo...`);
           const { data: userData } = await supabase.auth.getUser();
           const user = userData?.user;
 
@@ -146,7 +144,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             user?.email?.split("@")[0] ||
             "Sin nombre";
 
-      
           const roleFromMetadata =
             (user?.user_metadata?.role as Role) || "client";
 
@@ -163,31 +160,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             .single();
 
           if (insErr) {
-            if (retry < 3) {
-              console.log(`[${TAG}] Perfil no listo, reintentando en ${1000 + retry * 500}ms... (intento ${retry + 1}/3)`);
-              await new Promise((r) => setTimeout(r, 1000 + retry * 500));
-              return await attemptFetch(retry + 1);
-            }
+            console.error(`[${TAG}] Error al insertar perfil:`, insErr);
             throw insErr;
           }
 
           const prof = inserted as Profile;
           profileCache.current.set(userId, prof);
           setProfile(prof);
+          console.log(`[${TAG}] Perfil creado:`, prof.full_name);
           return prof;
-        };
+        } catch (e: any) {
+          console.error(`[${TAG}] Excepción en fetchOrCreateProfile:`, e?.message);
+          setProfile(null);
+          return null;
+        } finally {
+          fetchingProfiles.current.delete(userId);
+        }
+      })();
 
-        return await attemptFetch();
-      } catch (e: any) {
-        console.error(
-          `[${TAG}] Excepción en fetchOrCreateProfile:`,
-          e?.message
-        );
-        setProfile(null);
-        return null;
-      } finally {
-        loadingProfileUserId.current = null;
-      }
+      fetchingProfiles.current.set(userId, fetchPromise);
+      return fetchPromise;
     },
     []
   );
@@ -252,6 +244,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       subscription.remove();
     };
   }, []);
+
   useEffect(() => {
     let mounted = true;
 
@@ -265,7 +258,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           error,
         } = await supabase.auth.getSession();
 
-        if (error) console.error(`[${TAG}]Error al obtener sesión:`, error);
+        if (error) {
+          console.error(`[${TAG}]Error al obtener sesión:`, error);
+        }
+        
         if (!mounted) return;
 
         if (
@@ -279,15 +275,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           );
           setSession(currentSession);
 
-          try {
-            await fetchOrCreateProfile(currentSession.user.id);
-          } catch (err) {
-            console.error(`[${TAG}]Error cargando perfil en init:`, err);
-            setProfile(null);
-          }
+          await fetchOrCreateProfile(currentSession.user.id);
         } else {
           console.log(`[${TAG}]No hay sesión activa o token inválido`);
-          await supabase.auth.signOut({ scope: "local" });
           setSession(null);
           setProfile(null);
         }
@@ -300,9 +290,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       } finally {
         if (mounted) {
           initComplete.current = true;
+          console.log(`[${TAG}]Inicialización completada, liberando loading`);
           setLoading(false);
           snapshotStorage("init:end");
-          console.log(`[${TAG}]Inicialización completada`);
         }
       }
     };
@@ -338,6 +328,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           break;
 
         case "INITIAL_SESSION":
+          if (!initComplete.current) {
+            console.log(`[${TAG}]INITIAL_SESSION durante init, ignorado`);
+            break;
+          }
           if (
             !currentSession ||
             !currentSession.user ||
@@ -346,10 +340,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             console.log(`[${TAG}]Sesión inicial inválida`);
             setSession(null);
             setProfile(null);
-            break;
-          }
-          if (!initComplete.current) {
-            console.log(`[${TAG}]INITIAL_SESSION durante init, ignorado`);
             break;
           }
           console.log(`[${TAG}]Procesando sesión inicial`);
@@ -374,13 +364,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setLoading(true);
           setSession(currentSession);
 
-          try {
-            await fetchOrCreateProfile(currentSession.user.id);
-          } catch (e) {
-            console.error(`[${TAG}]Error cargando perfil post-login:`, e);
-          } finally {
-            setLoading(false);
-          }
+          await fetchOrCreateProfile(currentSession.user.id);
+          setLoading(false);
           break;
 
         case "TOKEN_REFRESHED":
@@ -420,7 +405,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         //limpieza previa completa
         await supabase.auth.signOut({ scope: "local" });
-        await new Promise((r) => setTimeout(r, 300)); // espera 300ms por bug SDK
+        await new Promise((r) => setTimeout(r, 300));
         setSession(null);
         setProfile(null);
 
@@ -567,7 +552,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         provider: "google",
         options: {
           redirectTo,
-          skipBrowserRedirect: true, // Previene redirección automática
+          skipBrowserRedirect: true,
           queryParams: {
             access_type: "offline",
             prompt: "consent",
