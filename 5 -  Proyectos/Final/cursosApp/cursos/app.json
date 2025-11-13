@@ -13,19 +13,8 @@
       "EXPO_PUBLIC_SUPABASE_URL": "https://sihlbryyokpepujxatut.supabase.co",
       "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpaGxicnl5b2twZXB1anhhdHV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzOTk0MzksImV4cCI6MjA3Njk3NTQzOX0.jm-E6wcMBycdRoCS3xyOVslE0YvAx29N1qX10iwgWSY",
       "eas": {
-        "projectId": "9ef7ee2c-6807-4f91-af80-07772d9b4f63"
+        "projectId": "3eb4afdf-c9b8-4237-89f1-ab922e749e4e"
       }
-    },
-
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.cursos.app"
     },
 
     "android": {
@@ -35,30 +24,28 @@
       },
       "package": "com.cursos.app",
       "edgeToEdgeEnabled": true,
-
       "permissions": [
-        "android.permission.CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ]
     },
 
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-
     "plugins": [
-      "expo-camera",
       [
-        "expo-barcode-scanner",
+        "expo-camera",
         {
-          "cameraPermission": "Se requiere acceso a la cámara para escanear códigos QR."
+          "cameraPermission": "La aplicación necesita acceso a la cámara para escanear códigos QR y grabar videos en los cursos."
         }
       ],
-      
       "react-native-video",
       "expo-web-browser",
-      "expo-font"
-    ],
-
-    "owner": "benja26"
+      "expo-font",
+      [
+        "expo-dev-client",
+        {
+          "addGeneratedScheme": false
+        }
+      ]
+    ]
   }
 }

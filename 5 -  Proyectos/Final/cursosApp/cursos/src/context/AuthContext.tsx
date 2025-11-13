@@ -88,6 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pendingRedirect, setPendingRedirect] = useState<boolean>(false);
 
   const initComplete = useRef(false);
   const loadingProfileUserId = useRef<string | null>(null);

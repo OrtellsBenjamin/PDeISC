@@ -91,7 +91,7 @@ export const updateProgress = async (req, res) => {
     .eq("course_id", course_id);
 
   if (error) {
-    console.error("❌ Error actualizando progreso:", error.message);
+    console.error("Error actualizando progreso:", error.message);
     return res.status(500).json({ error: error.message });
   }
 

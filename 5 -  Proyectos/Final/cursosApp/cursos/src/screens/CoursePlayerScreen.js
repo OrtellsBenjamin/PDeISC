@@ -7,7 +7,6 @@ import {
   StyleSheet,
   useWindowDimensions,
   ActivityIndicator,
-  SafeAreaView,
   StatusBar,
   Platform,
   Alert,
@@ -15,6 +14,7 @@ import {
 import Video from "react-native-video";
 import { Ionicons } from "@expo/vector-icons";
 import { AuthContext } from "../context/AuthContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CoursePlayerScreen({ route, navigation }) {
   const { course } = route.params;
@@ -26,10 +26,7 @@ export default function CoursePlayerScreen({ route, navigation }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(true);
-
-  //
-  const [currentTime, setCurrentTime] = useState(0);
-  const lastSeekRef = useRef(0);
+  const [showControls, setShowControls] = useState(true); // se mantiene aunque no se use
 
   const playerRef = useRef(null);
 
@@ -141,14 +138,13 @@ export default function CoursePlayerScreen({ route, navigation }) {
 
   const currentLesson = lessons[currentIndex];
 
-  const handleProgress = (data) => {
-    setCurrentTime(data.currentTime);
+  // Handlers de video (se dejan definidos para evitar errores)
+  const handleProgress = () => {
+    // Podés actualizar tiempo actual si lo necesitás más adelante
   };
-  const handleSeek = (e) => {
-    // Algunas implementaciones reportan e.currentTime; si no, aceptar e.seekTime
-    const t = e?.currentTime ?? e?.seekTime ?? 0;
-    lastSeekRef.current = t;
-    setCurrentTime(t);
+
+  const handleSeek = () => {
+    // Podés manejar el seek si lo necesitás más adelante
   };
 
   //componente sidebar móvil
@@ -238,34 +234,52 @@ export default function CoursePlayerScreen({ route, navigation }) {
 
   //Layout movil
   const renderMobileLayout = () => (
-    <ScrollView
-      style={styles.mobileScroll}
-      contentContainerStyle={{ paddingBottom: 40 }}
-    >
-      {/* Video */}
-      <View style={styles.mobileVideoContainer}>
+    <View style={{ flex: 1 }}>
+      {/* Video fuera del ScrollView */}
+      <View
+        pointerEvents="box-none"
+        style={styles.mobileVideoContainer}
+      >
         <Video
-          key={currentLesson?.id || currentIndex} // remount limpio al cambiar lección
+          key={currentLesson?.id || currentIndex}
           ref={playerRef}
           source={{ uri: currentLesson.video_url }}
           style={{
             width: width * 0.95,
-            height: (width * 0.95) * 9 / 16,
+            height: (width * 0.95 * 9) / 16,
             borderRadius: 12,
             backgroundColor: "#000",
-            alignSelf: "center",
           }}
           resizeMode="contain"
-          controls
+          controls={true}
+          paused={false}
+          repeat={false}
+          playInBackground={false}
+          playWhenInactive={false}
+          ignoreSilentSwitch="ignore"
+          mixWithOthers="mix"
+          volume={1.0}
+          rate={1.0}
+          pointerEvents="box-none"
+          disableFocus={true}
+          focusable={false}
           onProgress={handleProgress}
           onSeek={handleSeek}
-          progressUpdateInterval={500}
+          progressUpdateInterval={250}
+          onError={(error) => console.log("Video error:", error)}
+          onLoad={(data) => console.log("Video loaded:", data.duration)}
         />
       </View>
 
-      {/* Sidebar móvil */}
-      <MobileSidebar />
-    </ScrollView>
+      {/* Sidebar móvil en ScrollView */}
+      <ScrollView
+        style={styles.mobileScroll}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        scrollEnabled={true}
+      >
+        <MobileSidebar />
+      </ScrollView>
+    </View>
   );
 
   //Layout escritorio
@@ -284,9 +298,11 @@ export default function CoursePlayerScreen({ route, navigation }) {
             borderRadius: 12,
           }}
           resizeMode="contain"
-          controls
-          onProgress={handleProgress}
-          onSeek={handleSeek}
+          controls={true}
+          paused={false}
+          repeat={false}
+          playInBackground={false}
+          playWhenInactive={false}
           progressUpdateInterval={500}
         />
       </View>
@@ -297,9 +313,12 @@ export default function CoursePlayerScreen({ route, navigation }) {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+      <TouchableOpacity
+        onPress={() => navigation.goBack()}
+        style={styles.backBtn}
+      >
         <Ionicons name="chevron-back" size={22} color="#0B7077" />
         <Text style={styles.backText}>{course.title}</Text>
       </TouchableOpacity>
@@ -318,7 +337,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: Platform.OS === "ios" ? 8 : 10,
   },
-  backText: { fontSize: 16, fontWeight: "600", color: "#0B7077", marginLeft: 6 },
+  backText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#0B7077",
+    marginLeft: 6,
+  },
 
   mobileScroll: { flex: 1, backgroundColor: "#F8FAFB" },
   mobileVideoContainer: {
@@ -326,6 +350,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 10,
     marginHorizontal: 15,
+    backgroundColor: "#000",
+    borderRadius: 12,
   },
   mobileSidebar: {
     backgroundColor: "#fff",

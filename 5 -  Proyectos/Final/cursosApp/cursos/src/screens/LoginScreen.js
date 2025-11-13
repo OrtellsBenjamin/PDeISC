@@ -23,6 +23,8 @@ import { useNavigation } from "@react-navigation/native";
 import Toast from "react-native-toast-message";
 import { Ionicons } from "@expo/vector-icons";
 import BackButton from "../components/BackButton";
+import Header from "../components/Header";
+
 
 const HOME_ROUTE = "Home";
 
@@ -161,6 +163,7 @@ export default function LoginScreen() {
     contentContainerStyle={{ flexGrow: 1 }}
     style={{ backgroundColor: "#D2E6E4" }}
   >
+    
     <BackButton />
 
     <View style={styles.container}>
@@ -307,31 +310,9 @@ export default function LoginScreen() {
             },
           ]}
         >
-          <View
-            style={{
-              backgroundColor: "#fff",
-              paddingVertical: 20,
-              paddingHorizontal: 30,
-              borderRadius: 12,
-              elevation: 6,
-              shadowColor: "#000",
-              shadowOpacity: 0.2,
-              shadowRadius: 6,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: "700",
-                color: "#0B7077",
-                textAlign: "center",
-              }}
-            >
-              Iniciando sesión...
-            </Text>
-          </View>
         </View>
       )}
+      
     </View>
   </ScrollView>
 );

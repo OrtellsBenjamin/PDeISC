@@ -92,17 +92,6 @@ export default function AuthCallbackScreen() {
     }
   }, [session, navigation]);
 
-  return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color="#0B7077" />
-      <Text style={styles.text}>
-        {loading
-          ? "Completando inicio de sesión..."
-          : "Redirigiendo a tu cuenta..."}
-      </Text>
-      <Text style={styles.subtext}>Por favor espera unos segundos</Text>
-    </View>
-  );
 }
 
 const styles = StyleSheet.create({
