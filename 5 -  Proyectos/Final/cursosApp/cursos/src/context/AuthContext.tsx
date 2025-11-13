@@ -118,10 +118,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       try {
         const timeoutPromise = new Promise<null>((_, reject) =>
-          setTimeout(() => reject(new Error("Timeout al cargar perfil")), 20000)
+          setTimeout(() => reject(new Error("Timeout al cargar perfil")), 45000)
         );
 
-        const attemptFetch = async (retry = false): Promise<Profile | null> => {
+        const attemptFetch = async (retry = 0): Promise<Profile | null> => {
           const { data, error } = await supabase
             .from("profiles")
             .select("id, full_name, role")
@@ -167,11 +167,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             .single();
 
           if (insErr) {
-            // Retry si Supabase tarda en permitir la inserción
-            if (!retry) {
-              console.log(`[${TAG}] Perfil no listo, reintentando en 800ms...`);
-              await new Promise((r) => setTimeout(r, 800));
-              return await attemptFetch(true);
+            if (retry < 3) {
+              console.log(`[${TAG}] Perfil no listo, reintentando en ${1000 + retry * 500}ms... (intento ${retry + 1}/3)`);
+              await new Promise((r) => setTimeout(r, 1000 + retry * 500));
+              return await attemptFetch(retry + 1);
             }
             throw insErr;
           }
@@ -181,6 +180,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setProfile(prof);
           return prof;
         };
+
+        return await Promise.race([attemptFetch(), timeoutPromise]);
       } catch (e: any) {
         console.error(
           `[${TAG}] Excepción en fetchOrCreateProfile:`,
