@@ -1,7 +1,7 @@
 import React, { useEffect, useContext } from "react";
 import { View, Text, ActivityIndicator, StyleSheet, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "./AuthContext";
 import { supabase } from "../lib/SupaBase";
 
 export default function AuthCallbackScreen() {

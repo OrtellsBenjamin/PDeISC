@@ -20,7 +20,8 @@ export default function AllCoursesScreen({ navigation, route }) {
   const [loadingCats, setLoadingCats] = useState(true);
   const { width } = useWindowDimensions();
 
-  const API_URL = "https://onlearn-api.onrender.com/api";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
 
   //Obtener categorías
   const fetchCategories = async () => {
