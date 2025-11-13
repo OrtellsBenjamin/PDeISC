@@ -28,8 +28,7 @@ export default function AdminPanelScreen() {
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
-  const API_URL = "https://onlearn-api.onrender.com/api";
-
+  const API_BASE = process.env.EXPO_PUBLIC_API_URL;
   // Obtener todos los cursos
   const fetchCourses = async () => {
     try {

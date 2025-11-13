@@ -36,7 +36,7 @@ export default function MyCoursesScreen() {
 
 
 
-  const API_BASE = "https://onlearn-api.onrender.com/api";
+  const API_BASE = process.env.EXPO_PUBLIC_API_URL;
   const ENROLL_URL = `${API_BASE}/enrollments/me`;
   const COURSES_URL = `${API_BASE}/courses`;
 

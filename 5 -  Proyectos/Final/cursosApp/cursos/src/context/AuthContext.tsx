@@ -96,82 +96,105 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   //Una vez que cargue el perfil, lo toma del cache
   const profileCache = useRef<Map<string, Profile>>(new Map());
 
-  const fetchOrCreateProfile = useCallback(async (userId: string): Promise<Profile | null> => {
-  if (profileCache.current.has(userId)) {
-    const cached = profileCache.current.get(userId)!;
-    setProfile(cached);
-    return cached;
-  }
-
-  if (loadingProfileUserId.current === userId) {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    if (profileCache.current.has(userId)) {
-      const cached = profileCache.current.get(userId)!;
-      setProfile(cached);
-      return cached;
-    }
-    return null;
-  }
-
-  loadingProfileUserId.current = userId;
-
-  try {
-    const timeoutPromise = new Promise<null>((_, reject) =>
-      setTimeout(() => reject(new Error("Timeout al cargar perfil")), 20000)
-    );
-
-    const attemptFetch = async (retry = false): Promise<Profile | null> => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, role")
-        .eq("id", userId)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data) {
-        const prof = data as Profile;
-        profileCache.current.set(userId, prof);
-        setProfile(prof);
-        return prof;
+  const fetchOrCreateProfile = useCallback(
+    async (userId: string): Promise<Profile | null> => {
+      if (profileCache.current.has(userId)) {
+        const cached = profileCache.current.get(userId)!;
+        setProfile(cached);
+        return cached;
       }
 
-      // si no existe, lo crea
-      const newProfile = { id: userId, full_name: "Usuario", role: "client" as Role };
-      const { data: inserted, error: insErr } = await supabase
-        .from("profiles")
-        .insert([newProfile])
-        .select("id, full_name, role")
-        .single();
-
-      if (insErr) {
-        //si falla la inserción por “row not found” (Supabase delay), reintenta una vez
-        if (!retry) {
-          console.log(`[${TAG}] Perfil no listo, reintentando en 800ms...`);
-          await new Promise((r) => setTimeout(r, 800));
-          return await attemptFetch(true);
+      if (loadingProfileUserId.current === userId) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        if (profileCache.current.has(userId)) {
+          const cached = profileCache.current.get(userId)!;
+          setProfile(cached);
+          return cached;
         }
-        throw insErr;
+        return null;
       }
 
-      const prof = inserted as Profile;
-      profileCache.current.set(userId, prof);
-      setProfile(prof);
-      return prof;
-    };
+      loadingProfileUserId.current = userId;
 
-    const result = await Promise.race([attemptFetch(), timeoutPromise]);
-    return result;
-  } catch (e: any) {
-    console.error(`[${TAG}] Excepción en fetchOrCreateProfile:`, e?.message);
-    //Eliminamos el Toast directo — solo log, sin mostrar error al usuario
-    setProfile(null);
-    return null;
-  } finally {
-    loadingProfileUserId.current = null;
-  }
-}, []);
+      try {
+        const timeoutPromise = new Promise<null>((_, reject) =>
+          setTimeout(() => reject(new Error("Timeout al cargar perfil")), 20000)
+        );
 
+        const attemptFetch = async (retry = false): Promise<Profile | null> => {
+          const { data, error } = await supabase
+            .from("profiles")
+            .select("id, full_name, role")
+            .eq("id", userId)
+            .maybeSingle();
+
+          if (error) throw error;
+
+          // Si el perfil ya existe → devolverlo
+          if (data) {
+            const prof = data as Profile;
+            profileCache.current.set(userId, prof);
+            setProfile(prof);
+            return prof;
+          }
+
+        
+          const { data: userData } = await supabase.auth.getUser();
+          const user = userData?.user;
+
+          // Determinar nombre real
+          const fullName =
+            user?.user_metadata?.full_name || // registro normal
+            user?.user_metadata?.name || // Google OAuth
+            user?.user_metadata?.user_name || // GitHub OAuth
+            user?.email?.split("@")[0] || // fallback al email
+            "Sin nombre";
+
+      
+          const roleFromMetadata =
+            (user?.user_metadata?.role as Role) || "client";
+
+          const newProfile = {
+            id: userId,
+            full_name: fullName,
+            role: roleFromMetadata,
+          };
+
+          const { data: inserted, error: insErr } = await supabase
+            .from("profiles")
+            .insert([newProfile])
+            .select("id, full_name, role")
+            .single();
+
+          if (insErr) {
+            // Retry si Supabase tarda en permitir la inserción
+            if (!retry) {
+              console.log(`[${TAG}] Perfil no listo, reintentando en 800ms...`);
+              await new Promise((r) => setTimeout(r, 800));
+              return await attemptFetch(true);
+            }
+            throw insErr;
+          }
+
+          const prof = inserted as Profile;
+          profileCache.current.set(userId, prof);
+          setProfile(prof);
+          return prof;
+        };
+      } catch (e: any) {
+        console.error(
+          `[${TAG}] Excepción en fetchOrCreateProfile:`,
+          e?.message
+        );
+        //Eliminamos el Toast directo — solo log, sin mostrar error al usuario
+        setProfile(null);
+        return null;
+      } finally {
+        loadingProfileUserId.current = null;
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     const handleDeepLink = async (event: { url: string }) => {
@@ -192,9 +215,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           return;
         }
 
-        console.log(
-          `[${TAG}]Tokens OAuth recibidos, estableciendo sesión...`
-        );
+        console.log(`[${TAG}]Tokens OAuth recibidos, estableciendo sesión...`);
 
         const { data, error } = await supabase.auth.setSession({
           access_token,
@@ -341,31 +362,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           break;
 
         case "SIGNED_IN":
-  if (
-    !currentSession ||
-    !currentSession.user ||
-    !currentSession.access_token
-  ) {
-    console.warn(`[${TAG}]SIGNED_IN sin sesión válida`);
-    await supabase.auth.signOut({ scope: "local" });
-    setSession(null);
-    setProfile(null);
-    break;
-  }
+          if (
+            !currentSession ||
+            !currentSession.user ||
+            !currentSession.access_token
+          ) {
+            console.warn(`[${TAG}]SIGNED_IN sin sesión válida`);
+            await supabase.auth.signOut({ scope: "local" });
+            setSession(null);
+            setProfile(null);
+            break;
+          }
 
-  console.log(`[${TAG}]Usuario logueado:`, currentSession.user.email);
-  setLoading(true);
-  setSession(currentSession);
+          console.log(`[${TAG}]Usuario logueado:`, currentSession.user.email);
+          setLoading(true);
+          setSession(currentSession);
 
-  try {
-    await fetchOrCreateProfile(currentSession.user.id);
-  } catch (e) {
-    console.error(`[${TAG}]Error cargando perfil post-login:`, e);
-  } finally {
-    setTimeout(() => setLoading(false), 800);
-  }
-  break;
-
+          try {
+            await fetchOrCreateProfile(currentSession.user.id);
+          } catch (e) {
+            console.error(`[${TAG}]Error cargando perfil post-login:`, e);
+          } finally {
+            setTimeout(() => setLoading(false), 800);
+          }
+          break;
 
         case "TOKEN_REFRESHED":
           if (currentSession) {
@@ -593,74 +613,75 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-//Iniciar sesión con GitHub
-const signInWithGitHub = useCallback(async () => {
-  try {
-    console.log(`[${TAG}] Iniciando sesión con GitHub...`);
+  //Iniciar sesión con GitHub
+  const signInWithGitHub = useCallback(async () => {
+    try {
+      console.log(`[${TAG}] Iniciando sesión con GitHub...`);
 
-    //En navegador web
-    if (Platform.OS === "web") {
-      const currentUrl =
-        typeof window !== "undefined" ? window.location.origin : "";
+      //En navegador web
+      if (Platform.OS === "web") {
+        const currentUrl =
+          typeof window !== "undefined" ? window.location.origin : "";
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: "github",
+          options: {
+            redirectTo: `${currentUrl}/auth/callback`,
+          },
+        });
+
+        if (error) throw error;
+        console.log(`[${TAG}] Redirigiendo a GitHub (web)...`);
+        return;
+      }
+
+      //En movil
+      const redirectTo = "onlearn://auth/callback";
+      console.log(`[${TAG}] RedirectTo móvil:`, redirectTo);
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
-          redirectTo: `${currentUrl}/auth/callback`,
+          redirectTo,
+          skipBrowserRedirect: true,
         },
       });
 
       if (error) throw error;
-      console.log(`[${TAG}] Redirigiendo a GitHub (web)...`);
-      return;
-    }
+      if (!data?.url) throw new Error("Supabase no devolvió URL para GitHub");
 
-    //En movil
-    const redirectTo = "onlearn://auth/callback";
-    console.log(`[${TAG}] RedirectTo móvil:`, redirectTo);
+      console.log(`[${TAG}] Abriendo navegador para GitHub...`);
+      const result = await WebBrowser.openAuthSessionAsync(
+        data.url,
+        redirectTo
+      );
 
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "github",
-      options: {
-        redirectTo,
-        skipBrowserRedirect: true,
-      },
-    });
+      if (result.type === "success") {
+        console.log(`[${TAG}]GitHub OAuth completado`);
+      } else if (result.type === "cancel") {
+        Toast.show({
+          type: "info",
+          text1: "Inicio cancelado",
+          text2: "Cerrá la ventana e intentá nuevamente.",
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Error con GitHub",
+          text2: "No se pudo completar el inicio de sesión.",
+        });
+      }
 
-    if (error) throw error;
-    if (!data?.url) throw new Error("Supabase no devolvió URL para GitHub");
-
-    console.log(`[${TAG}] Abriendo navegador para GitHub...`);
-    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-
-    if (result.type === "success") {
-      console.log(`[${TAG}]GitHub OAuth completado`);
-    } else if (result.type === "cancel") {
-      Toast.show({
-        type: "info",
-        text1: "Inicio cancelado",
-        text2: "Cerrá la ventana e intentá nuevamente.",
-      });
-    } else {
+      console.log(`[${TAG}] Resultado del navegador GitHub:`, result);
+    } catch (e) {
+      console.error(`[${TAG}] Error en signInWithGitHub:`, e);
       Toast.show({
         type: "error",
-        text1: "Error con GitHub",
-        text2: "No se pudo completar el inicio de sesión.",
+        text1: "Error en inicio con GitHub",
+        text2: e?.message || "Revisá tu conexión e intentá nuevamente.",
       });
+      throw e;
     }
-
-    console.log(`[${TAG}] Resultado del navegador GitHub:`, result);
-  } catch (e) {
-    console.error(`[${TAG}] Error en signInWithGitHub:`, e);
-    Toast.show({
-      type: "error",
-      text1: "Error en inicio con GitHub",
-      text2: e?.message || "Revisá tu conexión e intentá nuevamente.",
-    });
-    throw e;
-  }
-}, []);
-
-
+  }, []);
 
   const signOut = useCallback(async () => {
     try {

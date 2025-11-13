@@ -28,7 +28,7 @@ export default function CreateCourseScreen({ route, navigation }) {
   const { width } = useWindowDimensions();
 
   // URLs base de la API
-  const API_BASE = "https://onlearn-api.onrender.com/api";
+  const API_BASE = process.env.EXPO_PUBLIC_API_URL;
   const COURSES_URL = `${API_BASE}/courses`;
   const UPLOAD_FILE_URL = `${API_BASE}/upload`;
 

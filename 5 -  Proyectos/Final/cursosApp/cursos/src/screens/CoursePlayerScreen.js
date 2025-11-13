@@ -30,7 +30,7 @@ export default function CoursePlayerScreen({ route, navigation }) {
 
   const playerRef = useRef(null);
 
-  const API_BASE = "https://onlearn-api.onrender.com/api";
+  const API_BASE = process.env.EXPO_PUBLIC_API_URL;
   const LESSONS_URL = `${API_BASE}/courses/${course.id}/lessons`;
   const PROGRESS_URL = `${API_BASE}/enrollments/${course.id}/progress`;
 

@@ -25,7 +25,7 @@ export default function HomeScreen() {
     const scrollView = scrollViewRef.current;
     if (!scrollView) return;
 
-    // ✅ Web (usa scrollIntoView con suavidad nativa del navegador)
+    //Web (usa scrollIntoView con suavidad nativa del navegador)
     if (Platform.OS === "web") {
       const element = document.getElementById(section);
       if (element) {
@@ -34,7 +34,7 @@ export default function HomeScreen() {
       }
     }
 
-    // ✅ Nativo (usa scrollTo nativo fluido sin lag)
+    //Nativo (usa scrollTo nativo fluido sin lag)
     let targetY = 0;
     if (section === "cursos") targetY = positions.cursos;
     else if (section === "categorias") targetY = positions.categorias;
@@ -54,19 +54,18 @@ export default function HomeScreen() {
       >
         <HeroSection />
 
-        {/* 📚 Cursos */}
+     
         <View onLayout={handleLayout("cursos")} id="cursos">
           <CoursesSection />
         </View>
 
-        {/* 🗂️ Categorías */}
+     
         <View onLayout={handleLayout("categorias")} id="categorias">
           <CategoriesSection />
         </View>
 
         <InfoSection />
 
-        {/* 📞 Contacto */}
         <View onLayout={handleLayout("contacto")} id="contacto">
           <FooterSection />
         </View>

@@ -19,7 +19,7 @@ export default function EditModuleScreen({ route, navigation }) {
   const { course } = route.params;
   const { session } = useContext(AuthContext);
 
-  const API_BASE = "https://onlearn-api.onrender.com/api";
+  const API_BASE = process.env.EXPO_PUBLIC_API_URL;
   const UPLOAD_FILE_URL = `${API_BASE}/upload`;
   const COURSES_URL = `${API_BASE}/courses`;
 
