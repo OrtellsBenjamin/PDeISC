@@ -14,11 +14,9 @@ import Toast from "react-native-toast-message";
 
 WebBrowser.maybeCompleteAuthSession();
 
-// Mis tipos de usuario
 type Role = "client" | "instructor" | "admin" | "pending_instructor";
 type Profile = { id: string; full_name: string | null; role: Role };
 
-//Contexto de autenticación
 type Ctx = {
   session: any;
   profile: Profile | null;
@@ -43,7 +41,6 @@ export const AuthContext = createContext<Ctx>({} as any);
 const DEBUG = true;
 const TAG = "AUTH";
 
-//Guardo en almacenamieto local
 const safeLocalStorage = {
   keys(): string[] {
     try {
@@ -62,8 +59,6 @@ const safeLocalStorage = {
       localStorage.removeItem(key);
     } catch {}
   },
-
-  //Limpio el almacenamiento de keys de supabase
   clearSupabaseKeys() {
     const keys = safeLocalStorage
       .keys()
@@ -73,7 +68,6 @@ const safeLocalStorage = {
   },
 };
 
-// Función para imprimir las claves de almacenamiento, para depuración
 function snapshotStorage(where: string) {
   if (!DEBUG) return;
   const keys = safeLocalStorage
@@ -82,17 +76,40 @@ function snapshotStorage(where: string) {
   console.log(`[${TAG}]Storage @${where}:`, keys);
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const runWithTimeout = async <T,>(
+  fn: () => Promise<T>,
+  ms: number,
+  retries: number = 1
+): Promise<T> => {
+  let lastError: any;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout")), ms)
+      );
+      const result = await Promise.race([fn(), timeoutPromise]);
+      return result as T;
+    } catch (err) {
+      lastError = err;
+      if (attempt < retries - 1) {
+        await sleep(400 + attempt * 300);
+      }
+    }
+  }
+  throw lastError;
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [pendingRedirect, setPendingRedirect] = useState<boolean>(false);
 
   const initComplete = useRef(false);
   const isSigningOut = useRef(false);
-  //Una vez que cargue el perfil, lo toma del cache
   const profileCache = useRef<Map<string, Profile>>(new Map());
   const fetchingProfiles = useRef<Map<string, Promise<Profile | null>>>(new Map());
 
@@ -111,41 +128,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       const fetchPromise = (async (): Promise<Profile | null> => {
-
-        const attempt = async () => {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 8000);
-
-          try {
-            const { data, error } = await supabase
-              .from("profiles")
-              .select("id, full_name, role")
-              .eq("id", userId)
-              .maybeSingle({ signal: controller.signal });
-
-            clearTimeout(timeout);
-
-            if (error) throw error;
-            return data;
-          } catch (err) {
-            clearTimeout(timeout);
-            throw err;
-          }
-        };
-
         try {
           console.log(`[${TAG}] Obteniendo perfil para userId:`, userId);
 
-          let data = null;
-          for (let i = 0; i < 3; i++) {
-            try {
-              data = await attempt();
-              break;
-            } catch (err) {
-              await new Promise((res) =>
-                setTimeout(res, 400 + i * 300)
-              );
-            }
+          const result = await runWithTimeout<any>(
+            async () =>
+              await supabase
+                .from("profiles")
+                .select("id, full_name, role")
+                .eq("id", userId)
+                .maybeSingle(),
+            8000,
+            3
+          );
+          
+          const { data, error } = result;
+
+          if (error) {
+            console.error(`[${TAG}] Error al obtener perfil:`, error);
+            throw error;
           }
 
           if (data) {
@@ -176,33 +177,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             role: roleFromMetadata,
           };
 
-          let inserted = null;
-          for (let i = 0; i < 3; i++) {
-            try {
-              const { data, error } = await supabase
+          const result = await runWithTimeout(
+            async () =>
+              await supabase
                 .from("profiles")
                 .insert([newProfile])
                 .select("id, full_name, role")
-                .single();
+                .single(),
+            8000,
+            3
+          );
+          
+          const { data: inserted, error: insErr } = result;
 
-              if (error) throw error;
-              inserted = data;
-              break;
-            } catch (err) {
-              await new Promise((r) =>
-                setTimeout(r, 400 + i * 300)
-              );
-            }
+          if (insErr) {
+            console.error(`[${TAG}] Error al insertar perfil:`, insErr);
+            throw insErr;
           }
-
-          if (!inserted) throw new Error("No se pudo crear perfil");
 
           const prof = inserted as Profile;
           profileCache.current.set(userId, prof);
           setProfile(prof);
           console.log(`[${TAG}] Perfil creado:`, prof.full_name);
           return prof;
-
         } catch (e: any) {
           console.error(`[${TAG}] Excepción en fetchOrCreateProfile:`, e?.message);
           setProfile(null);
@@ -218,6 +215,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     []
   );
 
+  // Deep link handler
   useEffect(() => {
     const handleDeepLink = async (event: { url: string }) => {
       console.log(`[${TAG}] 🔗 Deep link recibido:`, event.url);
@@ -270,12 +268,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
 
     const subscription = Linking.addEventListener("url", handleDeepLink);
-
-    return () => {
-      subscription.remove();
-    };
+    return () => subscription.remove();
   }, []);
 
+  // Inicialización y listener de auth
   useEffect(() => {
     let mounted = true;
 
@@ -284,15 +280,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       snapshotStorage("init:start");
 
       try {
-        const {
-          data: { session: currentSession },
-          error,
-        } = await supabase.auth.getSession();
+        const { data, error } = await runWithTimeout(
+          () => supabase.auth.getSession(),
+          8000,
+          3
+        );
+
+        const currentSession = data?.session;
 
         if (error) {
           console.error(`[${TAG}]Error al obtener sesión:`, error);
         }
-        
+
         if (!mounted) return;
 
         if (
@@ -306,6 +305,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           );
           setSession(currentSession);
 
+          // CAMBIO CRÍTICO: Esperar a que termine fetchOrCreateProfile
           await fetchOrCreateProfile(currentSession.user.id);
         } else {
           console.log(`[${TAG}]No hay sesión activa o token inválido`);
@@ -320,6 +320,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       } finally {
         if (mounted) {
+          // CAMBIO CRÍTICO: Marcar como completo DESPUÉS de cargar el perfil
           initComplete.current = true;
           console.log(`[${TAG}]Inicialización completada, liberando loading`);
           setLoading(false);
@@ -359,6 +360,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           break;
 
         case "INITIAL_SESSION":
+          // CAMBIO CRÍTICO: Solo ignorar si NO está completa la inicialización
           if (!initComplete.current) {
             console.log(`[${TAG}]INITIAL_SESSION durante init, ignorado`);
             break;
@@ -395,8 +397,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setLoading(true);
           setSession(currentSession);
 
-          await fetchOrCreateProfile(currentSession.user.id);
-          setLoading(false);
+          // CAMBIO CRÍTICO: Asegurar que loading se libere siempre
+          try {
+            await fetchOrCreateProfile(currentSession.user.id);
+          } finally {
+            setLoading(false);
+          }
           break;
 
         case "TOKEN_REFRESHED":
@@ -426,7 +432,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       console.log(`[${TAG}]Desregistrando listener`);
       subscription.unsubscribe();
     };
-  }, [fetchOrCreateProfile]);
+  }, [fetchOrCreateProfile]); // CAMBIO CRÍTICO: Agregada dependencia
 
   const signInEmail = useCallback(
     async (email: string, password: string) => {
@@ -534,7 +540,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setLoading(false);
       }
     },
-    [fetchOrCreateProfile]
+    []
   );
 
   const signInWithGoogle = useCallback(async () => {
