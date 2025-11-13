@@ -177,7 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             role: roleFromMetadata,
           };
 
-          const result = await runWithTimeout(
+          const insertRest = await runWithTimeout(
             async () =>
               await supabase
                 .from("profiles")
